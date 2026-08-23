@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>HIGHWAY RUSH</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#172617;
+  font-family:Arial,sans-serif;
+}
+
+#game{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+  background:#3d773d;
+}
+
+#road{
+  position:absolute;
+  left:7%;
+  width:86%;
+  height:100%;
+  background:#444;
+  border-left:12px solid #aaa;
+  border-right:12px solid #aaa;
+  overflow:hidden;
+}
+
+.roadLine{
+  position:absolute;
+  width:7px;
+  height:95px;
+  background:white;
+  opacity:.85;
+}
+
+.roadLine.one{
+  left:33.333%;
+}
+
+.roadLine.two{
+  left:66.666%;
+}
+
+/* PLAYER */
+
+#player{
+  position:absolute;
+  width:54px;
+  height:90px;
+  bottom:62px;
+  left:50%;
+  transform:translateX(-50%);
+  border-radius:10px;
+  z-index:30;
+  box-shadow:0 5px 12px #111;
+  transition:filter .1s;
+}
+
+#playerWindow{
+  position:absolute;
+  width:39px;
+  height:27px;
+  left:7.5px;
+  top:10px;
+  background:#9dd5e8;
+  border-radius:6px;
+}
+
+#playerStripe{
+  position:absolute;
+  width:42px;
+  height:5px;
+  left:6px;
+  top:43px;
+  background:rgba(255,255,255,.45);
+}
+
+.wheel{
+  position:absolute;
+  width:10px;
+  height:28px;
+  background:#111;
+  border-radius:4px;
+  top:19px;
+}
+
+.wheel.left{
+  left:-7px;
+}
+
+.wheel.right{
+  right:-7px;
+}
+
+.light{
+  position:absolute;
+  width:10px;
+  height:7px;
+  bottom:5px;
+  background:#fff;
+  border-radius:2px;
+}
+
+.light.left{
+  left:7px;
+}
+
+.light.right{
+  right:7px;
+}
+
+/* TRAFFIC */
+
+.car{
+  position:absolute;
+  width:48px;
+  height:84px;
+  transform:translateX(-50%);
+  border-radius:9px;
+  z-index:15;
+  box-shadow:0 4px 8px #111;
+}
+
+.truck{
+  width:65px;
+  height:120px;
+  border-radius:6px;
+}
+
+.carWindow{
+  position:absolute;
+  width:34px;
+  height:25px;
+  left:7px;
+  top:9px;
+  background:#a8d9e8;
+  border-radius:5px;
+}
+
+.truck .carWindow{
+  width:45px;
+  height:30px;
+  left:10px;
+}
+
+.carWheel{
+  position:absolute;
+  width:9px;
+  height:25px;
+  background:#111;
+  top:18px;
+  border-radius:3px;
+}
+
+.carWheel.left{
+  left:-6px;
+}
+
+.carWheel.right{
+  right:-6px;
+}
+
+/* SPEECH */
+
+.bubble{
+  position:absolute;
+  left:50%;
+  top:-8px;
+  transform:translate(-50%,-100%);
+  background:white;
+  color:#111;
+  padding:7px 10px;
+  border-radius:12px;
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:bold;
+  box-shadow:0 2px 7px #111;
+  z-index:100;
+  animation:pop .15s ease-out;
+}
+
+.bubble:after{
+  content:"";
+  position:absolute;
+  bottom:-7px;
+  left:50%;
+  transform:translateX(-50%);
+  border-left:7px solid transparent;
+  border-right:7px solid transparent;
+  border-top:8px solid white;
+}
+
+@keyframes pop{
+  from{
+    transform:translate(-50%,-100%) scale(.5);
+  }
+  to{
+    transform:translate(-50%,-100%) scale(1);
+  }
+}
+
+/* HUD */
+
+#hud{
+  position:absolute;
+  top:10px;
+  left:10px;
+  color:white;
+  z-index:120;
+  font-size:16px;
+  font-weight:bold;
+  line-height:1.45;
+  text-shadow:2px 2px 4px #000;
+}
+
+.bar{
+  width:170px;
+  height:12px;
+  background:#222;
+  border:1px solid white;
+  border-radius:7px;
+  overflow:hidden;
+}
+
+#healthFill{
+  height:100%;
+  width:100%;
+  background:#35d65a;
+}
+
+#speedFill{
+  height:100%;
+  width:50%;
+  background:#eee;
+}
+
+/* CONTROLS */
+
+#controls{
+  position:absolute;
+  z-index:150;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:18px;
+}
+
+.control{
+  width:85px;
+  height:62px;
+  border:2px solid white;
+  border-radius:12px;
+  background:rgba(0,0,0,.55);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  touch-action:none;
+}
+
+/* CAR SELECT */
+
+#startScreen,
+#gameOver{
+  position:absolute;
+  inset:0;
+  z-index:300;
+  background:rgba(0,0,0,.83);
+  color:white;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:20px;
+}
+
+#startScreen h1,
+#gameOver h1{
+  font-size:40px;
+  margin:0 0 8px;
+  letter-spacing:3px;
+}
+
+#cars{
+  display:flex;
+  gap:12px;
+  margin:12px 0 20px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.carChoice{
+  width:105px;
+  min-height:120px;
+  background:#222;
+  border:2px solid #777;
+  border-radius:10px;
+  padding:8px;
+  cursor:pointer;
+}
+
+.carChoice.selected{
+  border:3px solid white;
+  background:#333;
+}
+
+.preview{
+  width:35px;
+  height:62px;
+  margin:0 auto 7px;
+  border-radius:7px;
+}
+
+.carChoice b{
+  font-size:13px;
+}
+
+.stat{
+  font-size:11px;
+  margin-top:4px;
+}
+
+button{
+  border:0;
+  background:#1685ff;
+  color:white;
+  padding:14px 32px;
+  border-radius:9px;
+  font-size:19px;
+  font-weight:bold;
+}
+
+.hidden{
+  display:none!important;
+}
+
+#crashFlash{
+  position:absolute;
+  inset:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+  z-index:250;
+}
+
+@media(max-width:600px){
+  #road{
+    left:3%;
+    width:94%;
+  }
+
+  #startScreen h1,
+  #gameOver h1{
+    font-size:31px;
+  }
+
+  .carChoice{
+    width:88px;
+    min-height:105px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div id="road"></div>
+
+  <div id="player">
+    <div id="playerWindow"></div>
+    <div id="playerStripe"></div>
+
+    <div class="wheel left"></div>
+    <div class="wheel right"></div>
+
+    <div class="light left"></div>
+    <div class="light right"></div>
+  </div>
+
+  <div id="hud">
+
+    DISTANCE:
+    <span id="distance">0</span> m
+    <br>
+
+    SCORE:
+    <span id="score">0</span>
+    <br>
+
+    SPEED:
+    <span id="speed">0</span> km/h
+
+    <br>
+
+    HEALTH:
+
+    <div class="bar">
+      <div id="healthFill"></div>
+    </div>
+
+    SPEED:
+
+    <div class="bar">
+      <div id="speedFill"></div>
+    </div>
+
+  </div>
+
+  <div id="controls">
+    <div class="control" id="leftButton">◀</div>
+    <div class="control" id="rightButton">▶</div>
+  </div>
+
+  <div id="crashFlash"></div>
+
+  <!-- START -->
+
+  <div id="startScreen">
+
+    <h1>HIGHWAY RUSH</h1>
+
+    <p>
+      Choose your car and hit the highway.
+      <br>
+      Steer around traffic and don't destroy your car.
+    </p>
+
+    <div id="cars"></div>
+
+    <button id="startButton">
+      START DRIVING
+    </button>
+
+  </div>
+
+  <!-- GAME OVER -->
+
+  <div id="gameOver" class="hidden">
+
+    <h1>CAR WRECKED</h1>
+
+    <p>
+      Distance:
+      <b><span id="finalDistance">0</span> m</b>
+    </p>
+
+    <p>
+      Score:
+      <b><span id="finalScore">0</span></b>
+    </p>
+
+    <button id="restartButton">
+      DRIVE AGAIN
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+
+/* =====================================
+   CAR DEFINITIONS
+   ===================================== */
+
+const carsAvailable = [
+
+  {
+    name:"SPORTS",
+    color:"#e33131",
+    speed:16,
+    steering:1.65,
+    health:75
+  },
+
+  {
+    name:"MUSCLE",
+    color:"#222222",
+    speed:15,
+    steering:1.9,
+    health:110
+  },
+
+  {
+    name:"SEDAN",
+    color:"#2677d9",
+    speed:13,
+    steering:2.15,
+    health:100
+  },
+
+  {
+    name:"SUV",
+    color:"#35a85a",
+    speed:12,
+    steering:2.35,
+    health:150
+  }
+
+];
+
+let selectedCar=0;
+
+/* =====================================
+   ELEMENTS
+   ===================================== */
+
+const road=
+  document.getElementById("road");
+
+const player=
+  document.getElementById("player");
+
+const distanceText=
+  document.getElementById("distance");
+
+const scoreText=
+  document.getElementById("score");
+
+const speedText=
+  document.getElementById("speed");
+
+const healthFill=
+  document.getElementById("healthFill");
+
+const speedFill=
+  document.getElementById("speedFill");
+
+const startScreen=
+  document.getElementById("startScreen");
+
+const gameOver=
+  document.getElementById("gameOver");
+
+const flash=
+  document.getElementById("crashFlash");
+
+/* =====================================
+   GAME VARIABLES
+   ===================================== */
+
+let running=false;
+
+let lastTime=0;
+
+let distance=0;
+
+let score=0;
+
+let speed=12;
+
+let playerX=0;
+
+let steering=0;
+
+let health=100;
+
+let traffic=[];
+
+let roadLines=[];
+
+let spawnTimer=0;
+
+/* =====================================
+   DRIVER YELLING
+   ===================================== */
+
+const yelling=[
+
+  "HEY!",
+
+  "WATCH IT!",
+
+  "SLOW DOWN!",
+
+  "WHAT ARE YOU DOING?!",
+
+  "MOVE!",
+
+  "HEY, WATCH IT!",
+
+  "THAT WAS CLOSE!",
+
+  "YOU CUT ME OFF!",
+
+  "COME ON!",
+
+  "SERIOUSLY?!",
+
+  "GET OUT OF THE WAY!",
+
+  "WATCH WHERE YOU'RE GOING!",
+
+  "HEY!"
+
+];
+
+/* =====================================
+   CAR SELECTION
+   ===================================== */
+
+function createCarSelection(){
+
+  const container=
+    document.getElementById("cars");
+
+  container.innerHTML="";
+
+  carsAvailable.forEach(
+    (car,index)=>{
+
+      const choice=
+        document.createElement("div");
+
+      choice.className=
+        "carChoice";
+
+      if(index===selectedCar){
+        choice.classList.add("selected");
+      }
+
+      choice.innerHTML=`
+
+        <div
+          class="preview"
+          style="background:${car.color}"
+        ></div>
+
+        <b>${car.name}</b>
+
+        <div class="stat">
+          SPEED: ${car.speed}
+        </div>
+
+        <div class="stat">
+          STEERING: ${car.steering}
+        </div>
+
+        <div class="stat">
+          HEALTH: ${car.health}
+        </div>
+
+      `;
+
+      choice.onclick=()=>{
+
+        selectedCar=index;
+
+        createCarSelection();
+
+        applySelectedCar();
+
+      };
+
+      container.appendChild(choice);
+
+    }
+  );
+}
+
+function applySelectedCar(){
+
+  const car=
+    carsAvailable[selectedCar];
+
+  player.style.background=
+    car.color;
+}
+
+/* =====================================
+   ROAD
+   ===================================== */
+
+function createRoadLines(){
+
+  for(let i=0;i<15;i++){
+
+    for(let s=0;s<2;s++){
+
+      const line=
+        document.createElement("div");
+
+      line.className=
+        "roadLine "+
+        (s===0?"one":"two");
+
+      line.style.top=
+        (i*115-120)+"px";
+
+      road.appendChild(line);
+
+      roadLines.push(line);
+
+    }
+
+  }
+}
+
+function moveRoad(delta){
+
+  for(const line of roadLines){
+
+    let y=
+      parseFloat(line.style.top);
+
+    y+=
+      speed*
+      .9*
+      delta;
+
+    if(y>
+      window.innerHeight+120
+    ){
+
+      y=-120;
+
+    }
+
+    line.style.top=
+      y+"px";
+
+  }
+
+}
+
+/* =====================================
+   PLAYER STEERING
+   ===================================== */
+
+function updatePlayer(delta){
+
+  const car=
+    carsAvailable[selectedCar];
+
+  /*
+    This is deliberately MUCH faster
+    than the previous version.
+  */
+
+  playerX+=
+    steering*
+    car.steering*
+    delta;
+
+  /*
+    Slight friction when released.
+  */
+
+  if(steering===0){
+
+    playerX*=.985;
+
+  }
+
+  const maxX=
+    road.clientWidth/2-42;
+
+  if(playerX>maxX){
+    playerX=maxX;
+  }
+
+  if(playerX<-maxX){
+    playerX=-maxX;
+  }
+
+  player.style.left=
+    `calc(50% + ${playerX}px)`;
+
+}
+
+/* =====================================
+   CREATE TRAFFIC
+   ===================================== */
+
+function createTraffic(){
+
+  if(!running)return;
+
+  const car=
+    document.createElement("div");
+
+  const isTruck=
+    Math.random()<.15;
+
+  car.className=
+    isTruck
+    ? "car truck"
+    : "car";
+
+  const colors=[
+
+    "#d72e2e",
+    "#eee",
+    "#222",
+    "#d9ae22",
+    "#28974f",
+    "#7545bd",
+    "#e46f1e",
+    "#2983d4",
+    "#999"
+
+  ];
+
+  car.style.background=
+    colors[
+      Math.floor(
+        Math.random()*colors.length
+      )
+    ];
+
+  const margin=
+    isTruck?60:40;
+
+  const x=
+    margin+
+    Math.random()*
+    (road.clientWidth-
+    margin*2);
+
+  let y=
+    isTruck?-150:-110;
+
+  car.style.left=
+    x+"px";
+
+  car.style.top=
+    y+"px";
+
+  const win=
+    document.createElement("div");
+
+  win.className="carWindow";
+
+  car.appendChild(win);
+
+  const w1=
+    document.createElement("div");
+
+  w1.className=
+    "carWheel left";
+
+  car.appendChild(w1);
+
+  const w2=
+    document.createElement("div");
+
+  w2.className=
+    "carWheel right";
+
+  car.appendChild(w2);
+
+  road.appendChild(car);
+
+  traffic.push({
+
+    element:car,
+
+    x:x,
+
+    y:y,
+
+    passed:false,
+
+    truck:isTruck,
+
+    hit:false
+
+  });
+
+}
+
+/* =====================================
+   DRIVER REACTION
+   ===================================== */
+
+function yell(car){
+
+  if(
+    !car.element.parentNode
+  )return;
+
+  /*
+    Sometimes drivers don't react.
+  */
+
+  if(Math.random()<.18)return;
+
+  const bubble=
+    document.createElement("div");
+
+  bubble.className="bubble";
+
+  bubble.textContent=
+    yelling[
+      Math.floor(
+        Math.random()*
+        yelling.length
+      )
+    ];
+
+  car.element.appendChild(
+    bubble
+  );
+
+  setTimeout(()=>{
+
+    if(bubble.parentNode){
+
+      bubble.remove();
+
+    }
+
+  },2200);
+
+}
+
+/* =====================================
+   TRAFFIC MOVEMENT
+   ===================================== */
+
+function moveTraffic(delta){
+
+  for(
+    let i=traffic.length-1;
+    i>=0;
+    i--
+  ){
+
+    const car=
+      traffic[i];
+
+    car.y+=
+      speed*
+      (car.truck?.72:.9)*
+      delta;
+
+    car.element.style.top=
+      car.y+"px";
+
+    /*
+      Player passed car.
+    */
+
+    if(
+      !car.passed &&
+      car.y>
+      player.offsetTop+
+      player.offsetHeight
+    ){
+
+      car.passed=true;
+
+      score+=15;
+
+      const playerCenter=
+        road.clientWidth/2+
+        playerX;
+
+      const difference=
+        Math.abs(
+          playerCenter-car.x
+        );
+
+      /*
+        Close pass = yelling.
+      */
+
+      if(difference<90){
+
+        score+=30;
+
+        yell(car);
+
+      }
+
+    }
+
+    if(
+      car.y>
+      window.innerHeight+180
+    ){
+
+      car.element.remove();
+
+      traffic.splice(i,1);
+
+    }
+
+  }
+
+}
+
+/* =====================================
+   COLLISION
+   ===================================== */
+
+function overlap(a,b){
+
+  const A=
+    a.getBoundingClientRect();
+
+  const B=
+    b.getBoundingClientRect();
+
+  return !(
+    A.right<B.left+7 ||
+    A.left>B.right-7 ||
+    A.bottom<B.top+10 ||
+    A.top>B.bottom-10
+  );
+
+}
+
+function checkCollisions(){
+
+  for(const car of traffic){
+
+    if(car.hit)continue;
+
+    if(
+      overlap(
+        player,
+        car.element
+      )
+    ){
+
+      car.hit=true;
+
+      damageCar(car);
+
+      return;
+
+    }
+
+  }
+
+}
+
+/* =====================================
+   DAMAGE
+   ===================================== */
+
+function damageCar(car){
+
+  const vehicle=
+    carsAvailable[selectedCar];
+
+  /*
+    Trucks cause more damage.
+  */
+
+  const damage=
+    car.truck
+    ? 38
+    : 25;
+
+  health-=damage;
+
+  if(health<0){
+    health=0;
+  }
+
+  healthFill.style.width=
+    (health/
+    vehicle.health*
+    100)+"%";
+
+  /*
+    Flash.
+  */
+
+  flash.style.opacity=".7";
+
+  setTimeout(()=>{
+
+    flash.style.opacity="0";
+
+  },100);
+
+  /*
+    Make the car shake.
+  */
+
+  player.animate(
+
+    [
+      {
+        transform:
+        "translateX(-50%) rotate(-5deg)"
+      },
+
+      {
+        transform:
+        "translateX(-50%) rotate(5deg)"
+      },
+
+      {
+        transform:
+        "translateX(-50%) rotate(0deg)"
+      }
+
+    ],
+
+    {
+      duration:300
+    }
+
+  );
+
+  /*
+    Low health makes driving
+    slightly less stable.
+  */
+
+  if(health<=0){
+
+    crash();
+
+  }
+
+}
+
+/* =====================================
+   CRASH
+   ===================================== */
+
+function crash(){
+
+  running=false;
+
+  flash.style.opacity="1";
+
+  setTimeout(()=>{
+
+    flash.style.opacity="0";
+
+  },180);
+
+  document.getElementById(
+    "finalDistance"
+  ).textContent=
+    Math.floor(distance);
+
+  document.getElementById(
+    "finalScore"
+  ).textContent=
+    Math.floor(score);
+
+  gameOver.classList.remove(
+    "hidden"
+  );
+
+}
+
+/* =====================================
+   GAME LOOP
+   ===================================== */
+
+function gameLoop(time){
+
+  if(!running)return;
+
+  if(!lastTime){
+    lastTime=time;
+  }
+
+  let delta=
+    (time-lastTime)/16.67;
+
+  if(delta>3){
+    delta=3;
+  }
+
+  lastTime=time;
+
+  const vehicle=
+    carsAvailable[selectedCar];
+
+  /*
+    Distance.
+  */
+
+  distance+=
+    speed*
+    delta*
+    .12;
+
+  /*
+    Speed slowly rises.
+  */
+
+  speed+=
+    .003*
+    delta;
+
+  /*
+    Vehicle has its own maximum.
+  */
+
+  if(
+    speed>
+    vehicle.speed+8
+  ){
+
+    speed=
+      vehicle.speed+8;
+
+  }
+
+  /*
+    If badly damaged,
+    speed is reduced.
+  */
+
+  if(
+    health<
+    vehicle.health*.3
+  ){
+
+    speed-=
+      .003*delta;
+
+    if(speed<7){
+      speed=7;
+    }
+
+  }
+
+  updatePlayer(delta);
+
+  moveRoad(delta);
+
+  moveTraffic(delta);
+
+  checkCollisions();
+
+  /*
+    HUD.
+  */
+
+  distanceText.textContent=
+    Math.floor(distance);
+
+  scoreText.textContent=
+    Math.floor(score);
+
+  speedText.textContent=
+    Math.floor(speed*10);
+
+  healthFill.style.width=
+    Math.max(
+      0,
+      health/vehicle.health*100
+    )+"%";
+
+  speedFill.style.width=
+    Math.min(
+      100,
+      speed/(vehicle.speed+8)*100
+    )+"%";
+
+  requestAnimationFrame(
+    gameLoop
+  );
+
+}
+
+/* =====================================
+   TRAFFIC SPAWNER
+   ===================================== */
+
+let spawnLast=0;
+
+function spawnLoop(time){
+
+  if(!spawnLast){
+    spawnLast=time;
+  }
+
+  const delta=
+    time-spawnLast;
+
+  spawnLast=time;
+
+  if(running){
+
+    spawnTimer-=delta;
+
+    if(spawnTimer<=0){
+
+      createTraffic();
+
+      /*
+        More traffic later.
+      */
+
+      if(
+        Math.random()<
+        Math.min(.45,
+        distance/5000)
+      ){
+
+        setTimeout(()=>{
+
+          if(running){
+            createTraffic();
+          }
+
+        },180);
+
+      }
+
+      spawnTimer=
+        Math.max(
+          300,
+          650-speed*13
+        );
+
+    }
+
+  }
+
+  requestAnimationFrame(
+    spawnLoop
+  );
+
+}
+
+/* =====================================
+   STEERING INPUT
+   ===================================== */
+
+function steerLeft(){
+
+  if(running){
+    steering=-1;
+  }
+
+}
+
+function steerRight(){
+
+  if(running){
+    steering=1;
+  }
+
+}
+
+function stopSteering(){
+
+  steering=0;
+
+}
+
+/* Keyboard */
+
+document.addEventListener(
+  "keydown",
+  e=>{
+
+    if(
+      e.key==="ArrowLeft" ||
+      e.key.toLowerCase()==="a"
+    ){
+
+      steerLeft();
+
+    }
+
+    if(
+      e.key==="ArrowRight" ||
+      e.key.toLowerCase()==="d"
+    ){
+
+      steerRight();
+
+    }
+
+  }
+);
+
+document.addEventListener(
+  "keyup",
+  e=>{
+
+    if(
+      e.key==="ArrowLeft" ||
+      e.key==="ArrowRight" ||
+      e.key.toLowerCase()==="a" ||
+      e.key.toLowerCase()==="d"
+    ){
+
+      stopSteering();
+
+    }
+
+  }
+);
+
+/* Touch */
+
+const leftButton=
+  document.getElementById(
+    "leftButton"
+  );
+
+const rightButton=
+  document.getElementById(
+    "rightButton"
+  );
+
+leftButton.addEventListener(
+  "pointerdown",
+  e=>{
+    e.preventDefault();
+    steerLeft();
+  }
+);
+
+leftButton.addEventListener(
+  "pointerup",
+  stopSteering
+);
+
+leftButton.addEventListener(
+  "pointercancel",
+  stopSteering
+);
+
+rightButton.addEventListener(
+  "pointerdown",
+  e=>{
+    e.preventDefault();
+    steerRight();
+  }
+);
+
+rightButton.addEventListener(
+  "pointerup",
+  stopSteering
+);
+
+rightButton.addEventListener(
+  "pointercancel",
+  stopSteering
+);
+
+/* =====================================
+   START
+   ===================================== */
+
+function startGame(){
+
+  for(const car of traffic){
+
+    if(car.element.parentNode){
+      car.element.remove();
+    }
+
+  }
+
+  traffic=[];
+
+  const vehicle=
+    carsAvailable[selectedCar];
+
+  distance=0;
+
+  score=0;
+
+  health=
+    vehicle.health;
+
+  speed=
+    Math.min(
+      14,
+      vehicle.speed
+    );
+
+  playerX=0;
+
+  steering=0;
+
+  player.style.left=
+    "calc(50% + 0px)";
+
+  applySelectedCar();
+
+  healthFill.style.width=
+    "100%";
+
+  startScreen.classList.add(
+    "hidden"
+  );
+
+  gameOver.classList.add(
+    "hidden"
+  );
+
+  running=true;
+
+  lastTime=0;
+
+  spawnTimer=150;
+
+  requestAnimationFrame(
+    gameLoop
+  );
+
+}
+
+/* =====================================
+   BUTTONS
+   ===================================== */
+
+document
+  .getElementById("startButton")
+  .onclick=startGame;
+
+document
+  .getElementById("restartButton")
+  .onclick=startGame;
+
+/* =====================================
+   INITIALIZE
+   =========
