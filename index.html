@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>GAS: THE TRUTH</title>
+
+<style>
+*{
+box-sizing:border-box;
+user-select:none;
+-webkit-user-select:none;
+}
+
+html,body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:#050505;
+font-family:Arial,Helvetica,sans-serif;
+color:white;
+}
+
+canvas{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:100%;
+background:#111;
+}
+
+button{
+background:#571919;
+border:2px solid #a64a4a;
+color:white;
+padding:14px 32px;
+margin:7px;
+font-size:18px;
+font-weight:bold;
+cursor:pointer;
+}
+
+button:hover{
+background:#8a2828;
+}
+
+.screen{
+position:fixed;
+inset:0;
+z-index:100;
+display:flex;
+align-items:center;
+justify-content:center;
+background:radial-gradient(circle,#292020,#050505 75%);
+}
+
+.panel{
+width:min(850px,92vw);
+max-height:90vh;
+overflow:auto;
+background:rgba(4,4,4,.96);
+border:2px solid #8e3333;
+box-shadow:0 0 50px #300;
+padding:35px;
+text-align:center;
+}
+
+.logo{
+font-size:clamp(55px,11vw,110px);
+letter-spacing:14px;
+color:#d52e2e;
+margin:0;
+text-shadow:6px 6px 0 #280000;
+}
+
+.subtitle{
+letter-spacing:8px;
+color:#aaa;
+margin-bottom:30px;
+}
+
+.small{
+color:#888;
+font-size:13px;
+}
+
+.hidden{
+display:none!important;
+}
+
+#hud{
+position:fixed;
+left:10px;
+right:10px;
+top:10px;
+z-index:20;
+display:flex;
+justify-content:space-between;
+pointer-events:none;
+}
+
+.hudBox{
+background:rgba(0,0,0,.76);
+border:1px solid #555;
+padding:8px 12px;
+min-width:150px;
+font-size:13px;
+box-shadow:0 0 8px #000;
+}
+
+.bar{
+width:180px;
+height:12px;
+background:#191919;
+border:1px solid #555;
+margin:3px 0 6px;
+}
+
+.fill{
+height:100%;
+width:100%;
+}
+
+#healthFill{
+background:#41b957;
+}
+
+#armorFill{
+background:#3c8dcc;
+}
+
+#objective{
+position:fixed;
+z-index:20;
+left:50%;
+bottom:15px;
+transform:translateX(-50%);
+background:rgba(0,0,0,.85);
+border:1px solid #555;
+padding:9px 20px;
+font-size:14px;
+white-space:nowrap;
+}
+
+#weaponInfo{
+position:fixed;
+z-index:20;
+right:12px;
+bottom:65px;
+background:rgba(0,0,0,.8);
+border:1px solid #555;
+padding:10px;
+text-align:right;
+}
+
+#controls{
+position:fixed;
+z-index:20;
+left:10px;
+bottom:10px;
+font-size:11px;
+color:#aaa;
+}
+
+#bossHud{
+position:fixed;
+z-index:21;
+left:50%;
+top:72px;
+transform:translateX(-50%);
+width:min(700px,75vw);
+display:none;
+text-align:center;
+}
+
+#bossName{
+font-weight:bold;
+color:#f05b5b;
+margin-bottom:5px;
+}
+
+#bossBar{
+height:20px;
+border:2px solid #9b3333;
+background:#210909;
+}
+
+#bossFill{
+height:100%;
+width:100%;
+background:#d13a3a;
+}
+
+#message{
+position:fixed;
+z-index:80;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%);
+background:rgba(0,0,0,.94);
+border:2px solid #963838;
+padding:20px 35px;
+font-size:21px;
+text-align:center;
+display:none;
+box-shadow:0 0 30px #000;
+}
+
+#pauseScreen{
+position:fixed;
+z-index:90;
+inset:0;
+background:rgba(0,0,0,.72);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+#pauseScreen div{
+font-size:60px;
+font-weight:bold;
+letter-spacing:8px;
+}
+
+#crosshair{
+position:fixed;
+z-index:30;
+width:20px;
+height:20px;
+pointer-events:none;
+transform:translate(-50%,-50%);
+}
+
+#crosshair:before,
+#crosshair:after{
+content:"";
+position:absolute;
+background:#fff;
+}
+
+#crosshair:before{
+width:2px;
+height:20px;
+left:9px;
+top:0;
+}
+
+#crosshair:after{
+width:20px;
+height:2px;
+left:0;
+top:9px;
+}
+
+#mobileControls{
+display:none;
+}
+
+.mobileButton{
+position:fixed;
+z-index:50;
+width:60px;
+height:60px;
+border-radius:50%;
+padding:0;
+margin:0;
+background:rgba(80,80,80,.55);
+border:1px solid #aaa;
+}
+
+@media(max-width:700px){
+
+#controls{
+display:none;
+}
+
+#mobileControls{
+display:block;
+}
+
+.hudBox{
+min-width:0;
+font-size:10px;
+padding:5px;
+}
+
+.bar{
+width:90px;
+}
+
+#objective{
+bottom:5px;
+font-size:10px;
+}
+
+#weaponInfo{
+bottom:8px;
+right:5px;
+font-size:10px;
+}
+
+#crosshair{
+display:none;
+}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="menu" class="screen">
+<div class="panel">
+
+<h1 class="logo">GAS</h1>
+
+<div class="subtitle">THE TRUTH</div>
+
+<p class="small">CLASSIFIED FACILITY // INTERNAL SECURITY DIVISION</p>
+
+<p style="max-width:620px;margin:30px auto;color:#ccc;line-height:1.7;">
+The GAS facility has gone into lockdown.
+Security personnel are moving through the building.
+Something important is hidden inside.
+Find the truth, reach the command center, and get out.
+</p>
+
+<button id="startButton">START GAME</button>
+
+<button id="controlsButton">CONTROLS</button>
+
+</div>
+</div>
+
+<div id="controlsScreen" class="screen hidden">
+<div class="panel">
+
+<h1>CONTROLS</h1>
+
+<p><b>W A S D</b> — Move</p>
+<p><b>MOUSE</b> — Aim</p>
+<p><b>LEFT CLICK</b> — Fire</p>
+<p><b>1 - 5</b> — Change weapon</p>
+<p><b>R</b> — Reload</p>
+<p><b>SHIFT</b> — Dash</p>
+<p><b>P / ESC</b> — Pause</p>
+
+<button id="backButton">BACK</button>
+
+</div>
+</div>
+
+<div id="hud" class="hidden">
+
+<div class="hudBox">
+
+<div>HEALTH</div>
+
+<div class="bar">
+<div id="healthFill" class="fill"></div>
+</div>
+
+<div>ARMOR</div>
+
+<div class="bar">
+<div id="armorFill" class="fill"></div>
+</div>
+
+</div>
+
+<div class="hudBox">
+
+SCORE:
+<span id="scoreText">0</span>
+
+<br>
+
+ROOM:
+<span id="roomText">1</span>
+
+<br>
+
+KILLS:
+<span id="killsText">0</span>
+
+<br>
+
+COMBO:
+<span id="comboText">0</span>
+
+</div>
+
+<div class="hudBox">
+
+AMMO:
+<span id="ammoText">0</span> /
+<span id="reserveText">0</span>
+
+<br>
+
+WEAPON:
+<span id="weaponText">PISTOL</span>
+
+</div>
+
+</div>
+
+<div id="bossHud">
+
+<div id="bossName">SECURITY COMMANDER</div>
+
+<div id="bossBar">
+
+<div id="bossFill"></div>
+
+</div>
+
+</div>
+
+<div id="objective" class="hidden">
+OBJECTIVE: ENTER THE FACILITY
+</div>
+
+<div id="weaponInfo" class="hidden">
+PISTOL
+</div>
+
+<div id="controls" class="hidden">
+WASD MOVE | MOUSE AIM | CLICK FIRE | 1-5 WEAPONS | R RELOAD | SHIFT DASH | P PAUSE
+</div>
+
+<div id="message"></div>
+
+<div id="pauseScreen">
+<div>PAUSED</div>
+</div>
+
+<div id="crosshair"></div>
+
+<div id="mobileControls">
+
+<button id="mobileUp" class="mobileButton" style="left:75px;bottom:135px;">▲</button>
+
+<button id="mobileLeft" class="mobileButton" style="left:10px;bottom:70px;">◀</button>
+
+<button id="mobileDown" class="mobileButton" style="left:75px;bottom:70px;">▼</button>
+
+<button id="mobileRight" class="mobileButton" style="left:140px;bottom:70px;">▶</button>
+
+<button id="mobileFire" class="mobileButton" style="right:25px;bottom:90px;">●</button>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CANVAS
+============================================================ */
+
+const canvas=document.getElementById("gameCanvas");
+
+const ctx=canvas.getContext("2d");
+
+let WIDTH=window.innerWidth;
+
+let HEIGHT=window.innerHeight;
+
+canvas.width=WIDTH;
+
+canvas.height=HEIGHT;
+
+window.addEventListener("resize",function(){
+
+WIDTH=window.innerWidth;
+
+HEIGHT=window.innerHeight;
+
+canvas.width=WIDTH;
+
+canvas.height=HEIGHT;
+
+});
+
+/* ============================================================
+   UI
+============================================================ */
+
+const menu=document.getElementById("menu");
+
+const controlsScreen=document.getElementById("controlsScreen");
+
+const startButton=document.getElementById("startButton");
+
+const controlsButton=document.getElementById("controlsButton");
+
+const backButton=document.getElementById("backButton");
+
+const hud=document.getElementById("hud");
+
+const objectiveUI=document.getElementById("objective");
+
+const weaponInfo=document.getElementById("weaponInfo");
+
+const controlsUI=document.getElementById("controls");
+
+const messageUI=document.getElementById("message");
+
+const pauseScreen=document.getElementById("pauseScreen");
+
+const crosshair=document.getElementById("crosshair");
+
+const bossHud=document.getElementById("bossHud");
+
+const bossFill=document.getElementById("bossFill");
+
+const healthFill=document.getElementById("healthFill");
+
+const armorFill=document.getElementById("armorFill");
+
+const scoreText=document.getElementById("scoreText");
+
+const roomText=document.getElementById("roomText");
+
+const killsText=document.getElementById("killsText");
+
+const comboText=document.getElementById("comboText");
+
+const ammoText=document.getElementById("ammoText");
+
+const reserveText=document.getElementById("reserveText");
+
+const weaponText=document.getElementById("weaponText");
+
+/* ============================================================
+   GAME STATE
+============================================================ */
+
+let gameRunning=false;
+
+let paused=false;
+
+let score=0;
+
+let kills=0;
+
+let room=1;
+
+let combo=0;
+
+let comboTimer=0;
+
+let gameTime=0;
+
+let screenShake=0;
+
+let messageTimer=0;
+
+let player=null;
+
+let boss=null;
+
+/* ============================================================
+   ARRAYS
+============================================================ */
+
+let walls=[];
+
+let doors=[];
+
+let enemies=[];
+
+let bullets=[];
+
+let enemyBullets=[];
+
+let particles=[];
+
+let pickups=[];
+
+let barrels=[];
+
+let crates=[];
+
+let terminals=[];
+
+let lights=[];
+
+let decorations=[];
+
+let keycards=[];
+
+/* ============================================================
+   CAMERA
+============================================================ */
+
+let camera={
+x:0,
+y:0
+};
+
+/* ============================================================
+   INPUT
+============================================================ */
+
+const keys={};
+
+const mouse={
+x:WIDTH/2,
+y:HEIGHT/2,
+down:false
+};
+
+window.addEventListener("keydown",function(event){
+
+keys[event.key.toLowerCase()]=true;
+
+if(event.key==="1")selectWeapon(0);
+
+if(event.key==="2")selectWeapon(1);
+
+if(event.key==="3")selectWeapon(2);
+
+if(event.key==="4")selectWeapon(3);
+
+if(event.key==="5")selectWeapon(4);
+
+if(event.key.toLowerCase()==="r")reload();
+
+if(event.key==="Shift")dash();
+
+if(event.key.toLowerCase()==="p"||event.key==="Escape"){
+togglePause();
+}
+
+});
+
+window.addEventListener("keyup",function(event){
+
+keys[event.key.toLowerCase()]=false;
+
+});
+
+canvas.addEventListener("mousemove",function(event){
+
+mouse.x=event.clientX;
+
+mouse.y=event.clientY;
+
+crosshair.style.left=mouse.x+"px";
+
+crosshair.style.top=mouse.y+"px";
+
+});
+
+canvas.addEventListener("mousedown",function(){
+
+mouse.down=true;
+
+});
+
+window.addEventListener("mouseup",function(){
+
+mouse.down=false;
+
+});
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+function holdButton(id,key){
+
+const button=document.getElementById(id);
+
+button.addEventListener("touchstart",function(event){
+
+event.preventDefault();
+
+keys[key]=true;
+
+},{passive:false});
+
+button.addEventListener("touchend",function(event){
+
+event.preventDefault();
+
+keys[key]=false;
+
+},{passive:false});
+
+}
+
+holdButton("mobileUp","w");
+
+holdButton("mobileLeft","a");
+
+holdButton("mobileDown","s");
+
+holdButton("mobileRight","d");
+
+document.getElementById("mobileFire").addEventListener("touchstart",function(event){
+
+event.preventDefault();
+
+mouse.down=true;
+
+},{passive:false});
+
+document.getElementById("mobileFire").addEventListener("touchend",function(event){
+
+event.preventDefault();
+
+mouse.down=false;
+
+},{passive:false});
+
+/* ============================================================
+   MENU
+============================================================ */
+
+controlsButton.onclick=function(){
+
+menu.classList.add("hidden");
+
+controlsScreen.classList.remove("hidden");
+
+};
+
+backButton.onclick=function(){
+
+controlsScreen.classList.add("hidden");
+
+menu.classList.remove("hidden");
+
+};
+
+startButton.onclick=function(){
+
+startGame();
+
+};
+
+/* ============================================================
+   WEAPONS
+============================================================ */
+
+const weapons=[
+{
+name:"PISTOL",
+damage:30,
+fireRate:16,
+speed:15,
+spread:.02,
+pellets:1,
+magazine:12,
+ammo:12,
+reserve:72,
+reloadTime:55
+},
+{
+name:"SMG",
+damage:11,
+fireRate:4,
+speed:16,
+spread:.10,
+pellets:1,
+magazine:32,
+ammo:32,
+reserve:128,
+reloadTime:75
+},
+{
+name:"SHOTGUN",
+damage:17,
+fireRate:38,
+speed:13,
+spread:.42,
+pellets:9,
+magazine:6,
+ammo:6,
+reserve:42,
+reloadTime:90
+},
+{
+name:"RIFLE",
+damage:48,
+fireRate:25,
+speed:19,
+spread:.008,
+pellets:1,
+magazine:8,
+ammo:8,
+reserve:48,
+reloadTime:80
+},
+{
+name:"BURST GUN",
+damage:18,
+fireRate:28,
+speed:17,
+spread:.045,
+pellets:3,
+magazine:18,
+ammo:18,
+reserve:90,
+reloadTime:70
+}
+];
+
+let weaponIndex=0;
+
+let reloading=false;
+
+let reloadTimer=0;
+
+/* ============================================================
+   ENEMY TYPES
+============================================================ */
+
+const enemyTypes={
+guard:{
+name:"GUARD",
+health:55,
+speed:1.25,
+radius:17,
+damage:8,
+fireDelay:100,
+bulletSpeed:4,
+color:"#b53b3b",
+value:100
+},
+security:{
+name:"SECURITY",
+health:75,
+speed:1.55,
+radius:18,
+damage:10,
+fireDelay:75,
+bulletSpeed:5,
+color:"#466fa6",
+value:175
+},
+runner:{
+name:"RUNNER",
+health:38,
+speed:2.5,
+radius:13,
+damage:11,
+fireDelay:160,
+bulletSpeed:4,
+color:"#b97938",
+value:150
+},
+heavy:{
+name:"HEAVY",
+health:165,
+speed:.65,
+radius:25,
+damage:16,
+fireDelay:135,
+bulletSpeed:3,
+color:"#713535",
+value:325
+},
+medic:{
+name:"MEDIC",
+health:70,
+speed:1.1,
+radius:17,
+damage:6,
+fireDelay:115,
+bulletSpeed:4,
+color:"#4b9961",
+value:250
+},
+elite:{
+name:"ELITE",
+health:120,
+speed:1.85,
+radius:20,
+damage:14,
+fireDelay:55,
+bulletSpeed:6,
+color:"#8c4ab4",
+value:450
+},
+scout:{
+name:"SCOUT",
+health:45,
+speed:2.1,
+radius:14,
+damage:9,
+fireDelay:65,
+bulletSpeed:6,
+color:"#b5a13b",
+value:275
+},
+tank:{
+name:"TANK",
+health:280,
+speed:.4,
+radius:31,
+damage:20,
+fireDelay:160,
+bulletSpeed:3,
+color:"#4b4b4b",
+value:650
+}
+};
+
+/* ============================================================
+   START GAME
+============================================================ */
+
+function startGame(){
+
+gameRunning=true;
+
+paused=false;
+
+score=0;
+
+kills=0;
+
+room=1;
+
+combo=0;
+
+comboTimer=0;
+
+gameTime=0;
+
+screenShake=0;
+
+player={
+x:350,
+y:430,
+radius:16,
+speed:3.5,
+health:100,
+maxHealth:100,
+armor:50,
+maxArmor:50,
+angle:0,
+fireCooldown:0,
+invincible:0,
+dashCooldown:0
+};
+
+boss=null;
+
+walls=[];
+
+doors=[];
+
+enemies=[];
+
+bullets=[];
+
+enemyBullets=[];
+
+particles=[];
+
+pickups=[];
+
+barrels=[];
+
+crates=[];
+
+terminals=[];
+
+lights=[];
+
+decorations=[];
+
+keycards=[];
+
+for(let weapon of weapons){
+
+weapon.ammo=weapon.magazine;
+
+}
+
+weapons[0].reserve=72;
+
+weapons[1].reserve=128;
+
+weapons[2].reserve=42;
+
+weapons[3].reserve=48;
+
+weapons[4].reserve=90;
+
+weaponIndex=0;
+
+reloading=false;
+
+reloadTimer=0;
+
+buildFacility();
+
+menu.classList.add("hidden");
+
+controlsScreen.classList.add("hidden");
+
+hud.classList.remove("hidden");
+
+objectiveUI.classList.remove("hidden");
+
+weaponInfo.classList.remove("hidden");
+
+controlsUI.classList.remove("hidden");
+
+crosshair.style.display="block";
+
+objectiveUI.textContent="OBJECTIVE: FIND THE SECURITY DOOR";
+
+showMessage("WELCOME TO THE GAS FACILITY");
+
+updateHUD();
+
+requestAnimationFrame(gameLoop);
+
+}
+
+/* ============================================================
+   WALL CREATION
+============================================================ */
+
+function addWall(x,y,width,height){
+
+walls.push({
+x:x,
+y:y,
+w:width,
+h:height
+});
+
+}
+
+/* ============================================================
+   DOOR CREATION
+============================================================ */
+
+function addDoor(x,y,width,height,locked=true){
+
+doors.push({
+x:x,
+y:y,
+w:width,
+h:height,
+locked:locked,
+keyRequired:false
+});
+
+}
+
+/* ============================================================
+   FACILITY
+============================================================ */
+
+function buildFacility(){
+
+const mapWidth=3200;
+
+const mapHeight=2600;
+
+/* outer walls */
+
+addWall(0,0,mapWidth,45);
+
+addWall(0,mapHeight-45,mapWidth,45);
+
+addWall(0,0,45,mapHeight);
+
+addWall(mapWidth-45,0,45,mapHeight);
+
+/* upper left */
+
+addWall(100,120,700,32);
+
+addWall(100,120,32,650);
+
+addWall(100,738,700,32);
+
+addWall(768,120,32,250);
+
+addWall(768,520,32,250);
+
+/* upper center */
+
+addWall(1000,120,850,32);
+
+addWall(1000,738,850,32);
+
+addWall(1000,120,32,230);
+
+addWall(1000,510,32,260);
+
+addWall(1818,120,32,650);
+
+/* upper right */
+
+addWall(2050,120,850,32);
+
+addWall(2050,738,850,32);
+
+addWall(2050,120,32,250);
+
+addWall(2050,510,32,260);
+
+addWall(2868,120,32,650);
+
+/* center left */
+
+addWall(100,950,900,32);
+
+addWall(100,1550,900,32);
+
+addWall(100,950,32,600);
+
+addWall(968,950,32,220);
+
+addWall(968,1280,32,270);
+
+/* center middle */
+
+addWall(1200,950,700,32);
+
+addWall(1200,1550,700,32);
+
+addWall(1200,950,32,600);
+
+addWall(1868,950,32,600);
+
+/* center right */
+
+addWall(2100,950,800,32);
+
+addWall(2100,1550,800,32);
+
+addWall(2100,950,32,600);
+
+addWall(2868,950,32,600);
+
+/* bottom left */
+
+addWall(100,1780,850,32);
+
+addWall(100,2290,850,32);
+
+addWall(100,1780,32,510);
+
+addWall(918,1780,32,210);
+
+addWall(918,2100,32,190);
+
+/* bottom center */
+
+addWall(1100,1780,800,32);
+
+addWall(1100,2290,800,32);
+
+addWall(1100,1780,32,510);
+
+addWall(1868,1780,32,510);
+
+/* bottom right */
+
+addWall(2050,1780,850,32);
+
+addWall(2050,2290,850,32);
+
+addWall(2050,1780,32,510);
+
+addWall(2868,1780,32,510);
+
+/* interior structures */
+
+addWall(250,300,250,32);
+
+addWall(600,300,130,32);
+
+addWall(250,510,200,32);
+
+addWall(560,510,180,32);
+
+addWall(1100,300,280,32);
+
+addWall(1500,300,260,32);
+
+addWall(1100,520,320,32);
+
+addWall(1550,520,220,32);
+
+addWall(2150,300,230,32);
+
+addWall(2490,300,210,32);
+
+addWall(2150,520,300,32);
+
+addWall(2520,520,170,32);
+
+addWall(250,1100,280,32);
+
+addWall(650,1100,220,32);
+
+addWall(250,1300,220,32);
+
+addWall(600,1300,260,32);
+
+addWall(1300,1100,220,32);
+
+addWall(1600,1100,220,32);
+
+addWall(1300,1300,300,32);
+
+addWall(1680,1300,130,32);
+
+addWall(2200,1100,250,32);
+
+addWall(2550,1100,180,32);
+
+addWall(2200,1300,180,32);
+
+addWall(2500,1300,240,32);
+
+addWall(250,1910,250,32);
+
+addWall(600,1910,220,32);
+
+addWall(250,2120,300,32);
+
+addWall(650,2120,170,32);
+
+addWall(1200,1910,250,32);
+
+addWall(1550,1910,220,32);
+
+addWall(1200,2120,300,32);
+
+addWall(1600,2120,170,32);
+
+addWall(2150,1910,300,32);
+
+addWall(2550,1910,150,32);
+
+addWall(2150,2120,220,32);
+
+addWall(2450,2120,250,32);
+
+/* doors */
+
+addDoor(768,370,32,150,true);
+
+addDoor(968,350,32,160,true);
+
+addDoor(1818,350,32,160,true);
+
+addDoor(2050,350,32,160,true);
+
+addDoor(968,1170,32,110,true);
+
+addDoor(1868,1160,32,140,true);
+
+addDoor(918,1980,32,120,true);
+
+addDoor(1868,1980,32,120,true);
+
+addDoor(950,1500,180,32,true);
+
+addDoor(1900,1500,150,32,true);
+
+/* crates */
+
+for(let i=0;i<55;i++){
+
+let crate={
+x:120+Math.random()*2750,
+y:170+Math.random()*2050,
+w:32,
+h:32
+};
+
+crates.push(crate);
+
+}
+
+/* barrels */
+
+for(let i=0;i<35;i++){
+
+barrels.push({
+x:130+Math.random()*2700,
+y:180+Math.random()*2000,
+radius:16,
+health:40
+});
+
+}
+
+/* terminals */
+
+const terminalPositions=[
+[650,650],
+[1450,650],
+[2600,650],
+[650,1450],
+[1550,1450],
+[2600,1450],
+[650,2180],
+[1500,2180],
+[2600,2180]
+];
+
+for(let position of terminalPositions){
+
+terminals.push({
+x:position[0],
+y:position[1],
+used:false
+});
+
+}
+
+/* lights */
+
+for(let i=0;i<100;i++){
+
+lights.push({
+x:100+Math.random()*2800,
+y:100+Math.random()*2300,
+phase:Math.random()*100
+});
+
+}
+
+/* decorations */
+
+for(let i=0;i<300;i++){
+
+decorations.push({
+x:60+Math.random()*3080,
+y:60+Math.random()*2480,
+type:Math.floor(Math.random()*8)
+});
+
+}
+
+/* keycards */
+
+keycards.push({
+x:600,
+y:680,
+taken:false
+});
+
+keycards.push({
+x:1450,
+y:680,
+taken:false
+});
+
+keycards.push({
+x:2600,
+y:680,
+taken:false
+});
+
+/* initial pickups */
+
+spawnPickup(250,650,"health");
+
+spawnPickup(700,650,"ammo");
+
+spawnPickup(1400,650,"armor");
+
+spawnPickup(1750,650,"ammo");
+
+spawnPickup(2500,650,"health");
+
+spawnPickup(600,1450,"ammo");
+
+spawnPickup(1600,1450,"armor");
+
+spawnPickup(2500,1450,"health");
+
+spawnPickup(600,2180,"ammo");
+
+spawnPickup(1600,2180,"health");
+
+/* enemy groups */
+
+spawnGroup(5,450,430,280);
+
+spawnGroup(7,1400,430,350);
+
+spawnGroup(8,2450,430,350);
+
+spawnGroup(7,500,1200,350);
+
+spawnGroup(8,1500,1200,350);
+
+spawnGroup(9,2450,1200,350);
+
+spawnGroup(7,500,2050,300);
+
+spawnGroup(8,1500,2050,350);
+
+spawnGroup(9,2500,2050,350);
+
+}
+
+/* ============================================================
+   
