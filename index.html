@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Gas: Escape</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    user-select:none;
+    -webkit-user-select:none;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#090909;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+#gameWrap{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    background:#111;
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    background:#171717;
+}
+
+#menu{
+    position:absolute;
+    inset:0;
+    z-index:20;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:
+        radial-gradient(circle at center,#242424 0%,#090909 75%);
+    color:white;
+}
+
+#menu h1{
+    font-size:clamp(42px,9vw,90px);
+    letter-spacing:6px;
+    color:#ffcc00;
+    text-shadow:0 0 15px #ffcc00;
+    margin-bottom:5px;
+}
+
+#menu h2{
+    color:#ddd;
+    font-size:clamp(14px,3vw,25px);
+    margin-bottom:35px;
+    letter-spacing:3px;
+}
+
+#startBtn,#restartBtn{
+    border:3px solid #ffcc00;
+    background:#111;
+    color:#ffcc00;
+    padding:18px 45px;
+    font-size:24px;
+    font-weight:bold;
+    cursor:pointer;
+    border-radius:8px;
+}
+
+#startBtn:hover,#restartBtn:hover{
+    background:#ffcc00;
+    color:#111;
+}
+
+.instructions{
+    margin-top:25px;
+    color:#aaa;
+    line-height:1.7;
+    font-size:14px;
+    max-width:500px;
+}
+
+#hud{
+    position:absolute;
+    z-index:5;
+    top:0;
+    left:0;
+    width:100%;
+    padding:12px;
+    pointer-events:none;
+    color:white;
+    display:none;
+}
+
+.hudRow{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.box{
+    background:rgba(0,0,0,.65);
+    border:2px solid #555;
+    padding:7px 11px;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+#healthOuter{
+    width:180px;
+    height:20px;
+    background:#222;
+    border:2px solid #aaa;
+    border-radius:5px;
+    overflow:hidden;
+}
+
+#healthInner{
+    height:100%;
+    width:100%;
+    background:#28d34f;
+}
+
+#ammo{
+    color:#ffcc00;
+}
+
+#grenades{
+    color:#7dff72;
+}
+
+#bossBar{
+    position:absolute;
+    top:75px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(500px,80vw);
+    display:none;
+    background:#222;
+    border:2px solid #c33;
+    height:24px;
+}
+
+#bossInner{
+    width:100%;
+    height:100%;
+    background:#d22;
+}
+
+#message{
+    position:absolute;
+    z-index:10;
+    top:35%;
+    width:100%;
+    text-align:center;
+    color:white;
+    font-size:clamp(25px,6vw,60px);
+    font-weight:bold;
+    text-shadow:0 3px 8px #000;
+    pointer-events:none;
+}
+
+#gameOver{
+    position:absolute;
+    z-index:30;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    background:rgba(0,0,0,.82);
+    color:white;
+    text-align:center;
+}
+
+#gameOver h1{
+    color:#e33;
+    font-size:60px;
+    margin-bottom:15px;
+}
+
+#finalScore{
+    font-size:24px;
+    margin-bottom:25px;
+}
+
+#mobileControls{
+    position:absolute;
+    z-index:8;
+    inset:0;
+    pointer-events:none;
+    display:none;
+}
+
+.control{
+    position:absolute;
+    pointer-events:auto;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.35);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:25px;
+    font-weight:bold;
+    touch-action:none;
+}
+
+#up{left:82px;bottom:145px}
+#down{left:82px;bottom:35px}
+#left{left:5px;bottom:90px}
+#right{left:159px;bottom:90px}
+
+#shoot{
+    right:95px;
+    bottom:85px;
+    width:90px;
+    height:90px;
+    background:rgba(220,50,40,.25);
+}
+
+#grenadeBtn{
+    right:15px;
+    bottom:190px;
+    width:70px;
+    height:70px;
+    background:rgba(60,180,60,.25);
+    font-size:15px;
+}
+
+#reloadBtn{
+    right:15px;
+    bottom:85px;
+    width:65px;
+    height:65px;
+    font-size:13px;
+}
+
+@media(pointer:coarse){
+    #mobileControls{
+        display:block;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameWrap">
+
+<canvas id="game"></canvas>
+
+<div id="menu">
+    <h1>GAS</h1>
+    <h2>THE ESCAPE</h2>
+
+    <button id="startBtn">START GAME</button>
+
+    <div class="instructions">
+        <b>PC:</b> WASD to move • Mouse to aim • Click to shoot<br>
+        R to reload • G to throw grenade<br><br>
+        <b>Mobile:</b> Use the movement controls and action buttons.
+    </div>
+</div>
+
+<div id="hud">
+
+    <div class="hudRow">
+
+        <div class="box">
+            HP
+            <div id="healthOuter">
+                <div id="healthInner"></div>
+            </div>
+        </div>
+
+        <div class="box" id="ammo">
+            AMMO: 12 / 120
+        </div>
+
+        <div class="box" id="grenades">
+            GRENADES: 3
+        </div>
+
+        <div class="box">
+            WAVE: <span id="wave">1</span>
+        </div>
+
+        <div class="box">
+            SCORE: <span id="score">0</span>
+        </div>
+
+    </div>
+
+</div>
+
+<div id="bossBar">
+    <div id="bossInner"></div>
+</div>
+
+<div id="message"></div>
+
+<div id="gameOver">
+    <h1>GAME OVER</h1>
+    <div id="finalScore">Score: 0</div>
+    <button id="restartBtn">PLAY AGAIN</button>
+</div>
+
+<div id="mobileControls">
+
+    <div class="control" id="up">▲</div>
+    <div class="control" id="down">▼</div>
+    <div class="control" id="left">◀</div>
+    <div class="control" id="right">▶</div>
+
+    <div class="control" id="shoot">●</div>
+    <div class="control" id="grenadeBtn">GRENADE</div>
+    <div class="control" id="reloadBtn">RELOAD</div>
+
+</div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   BASIC SETUP
+========================================================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let W = 0;
+let H = 0;
+
+function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const menu = document.getElementById("menu");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+const gameOverScreen = document.getElementById("gameOver");
+
+const hud = document.getElementById("hud");
+const healthInner = document.getElementById("healthInner");
+const ammoText = document.getElementById("ammo");
+const grenadeText = document.getElementById("grenades");
+const waveText = document.getElementById("wave");
+const scoreText = document.getElementById("score");
+
+const bossBar = document.getElementById("bossBar");
+const bossInner = document.getElementById("bossInner");
+const message = document.getElementById("message");
+
+const finalScore = document.getElementById("finalScore");
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let running = false;
+let gameOver = false;
+
+let score = 0;
+let wave = 1;
+
+let enemies = [];
+let bullets = [];
+let particles = [];
+let grenades = [];
+let pickups = [];
+let obstacles = [];
+
+let cameraX = 0;
+let cameraY = 0;
+
+let lastTime = 0;
+
+let waveEnemiesLeft = 0;
+let waveSpawnTimer = 0;
+let waveCompleteTimer = 0;
+
+let boss = null;
+
+/* =========================================================
+   WORLD
+========================================================= */
+
+const WORLD_W = 3600;
+const WORLD_H = 2600;
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+const keys = {};
+
+let mouseX = W / 2;
+let mouseY = H / 2;
+let mouseDown = false;
+
+window.addEventListener("keydown",e=>{
+    keys[e.key.toLowerCase()] = true;
+
+    if(e.key.toLowerCase()==="r"){
+        reload();
+    }
+
+    if(e.key.toLowerCase()==="g"){
+        throwGrenade();
+    }
+
+    if(e.key===" "){
+        e.preventDefault();
+    }
+});
+
+window.addEventListener("keyup",e=>{
+    keys[e.key.toLowerCase()] = false;
+});
+
+canvas.addEventListener("mousemove",e=>{
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+canvas.addEventListener("mousedown",e=>{
+    if(e.button===0){
+        mouseDown=true;
+    }
+});
+
+window.addEventListener("mouseup",e=>{
+    if(e.button===0){
+        mouseDown=false;
+    }
+});
+
+/* =========================================================
+   MOBILE INPUT
+========================================================= */
+
+const mobileKeys = {
+    up:false,
+    down:false,
+    left:false,
+    right:false,
+    shoot:false
+};
+
+function holdButton(id,property){
+    const el=document.getElementById(id);
+
+    const down=e=>{
+        e.preventDefault();
+        mobileKeys[property]=true;
+    };
+
+    const up=e=>{
+        e.preventDefault();
+        mobileKeys[property]=false;
+    };
+
+    el.addEventListener("touchstart",down,{passive:false});
+    el.addEventListener("touchend",up,{passive:false});
+    el.addEventListener("touchcancel",up,{passive:false});
+    el.addEventListener("mousedown",down);
+    el.addEventListener("mouseup",up);
+    el.addEventListener("mouseleave",up);
+}
+
+holdButton("up","up");
+holdButton("down","down");
+holdButton("left","left");
+holdButton("right","right");
+holdButton("shoot","shoot");
+
+document.getElementById("grenadeBtn").addEventListener("click",throwGrenade);
+document.getElementById("reloadBtn").addEventListener("click",reload);
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const player = {
+    x: WORLD_W/2,
+    y: WORLD_H/2,
+
+    radius:18,
+
+    speed:260,
+
+    health:100,
+    maxHealth:100,
+
+    ammo:12,
+    maxAmmo:12,
+    reserveAmmo:120,
+
+    grenades:3,
+    maxGrenades:5,
+
+    shootCooldown:0,
+    reloadTimer:0,
+
+    invulnerable:0
+};
+
+/* =========================================================
+   UTILITIES
+========================================================= */
+
+function rand(min,max){
+    return Math.random()*(max-min)+min;
+}
+
+function randInt(min,max){
+    return Math.floor(rand(min,max+1));
+}
+
+function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+}
+
+function distance(a,b){
+    return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+function circleRectCollision(cx,cy,r,rect){
+    const closestX=clamp(cx,rect.x,rect.x+rect.w);
+    const closestY=clamp(cy,rect.y,rect.y+rect.h);
+
+    const dx=cx-closestX;
+    const dy=cy-closestY;
+
+    return dx*dx+dy*dy<r*r;
+}
+
+function randomColor(){
+    const colors=[
+        "#ffcc00",
+        "#ff6b6b",
+        "#69d2ff",
+        "#a86cff",
+        "#6cff91",
+        "#ffffff"
+    ];
+
+    return colors[randInt(0,colors.length-1)];
+}
+
+/* =========================================================
+   OBSTACLES
+========================================================= */
+
+function createObstacles(){
+
+    obstacles=[];
+
+    for(let i=0;i<45;i++){
+
+        const w=randInt(80,220);
+        const h=randInt(70,180);
+
+        const x=randInt(100,WORLD_W-w-100);
+        const y=randInt(100,WORLD_H-h-100);
+
+        if(
+            Math.abs(x-player.x)<400 &&
+            Math.abs(y-player.y)<400
+        ){
+            continue;
+        }
+
+        obstacles.push({
+            x,
+            y,
+            w,
+            h
+        });
+    }
+}
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function collidesWorld(x,y,r){
+
+    if(x-r<0 || x+r>WORLD_W ||
+       y-r<0 || y+r>WORLD_H){
+        return true;
+    }
+
+    for(const o of obstacles){
+
+        if(circleRectCollision(x,y,r,o)){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function moveEntity(entity,dx,dy){
+
+    const nx=entity.x+dx;
+
+    if(!collidesWorld(nx,entity.y,entity.radius)){
+        entity.x=nx;
+    }
+
+    const ny=entity.y+dy;
+
+    if(!collidesWorld(entity.x,ny,entity.radius)){
+        entity.y=ny;
+    }
+}
+
+/* =========================================================
+   RESET GAME
+========================================================= */
+
+function resetGame(){
+
+    running=true;
+    gameOver=false;
+
+    score=0;
+    wave=1;
+
+    enemies=[];
+    bullets=[];
+    particles=[];
+    grenades=[];
+    pickups=[];
+
+    boss=null;
+
+    player.x=WORLD_W/2;
+    player.y=WORLD_H/2;
+
+    player.health=100;
+
+    player.ammo=12;
+    player.reserveAmmo=120;
+
+    player.grenades=3;
+
+    player.shootCooldown=0;
+    player.reloadTimer=0;
+
+    createObstacles();
+
+    menu.style.display="none";
+    gameOverScreen.style.display="none";
+    hud.style.display="block";
+
+    bossBar.style.display="none";
+
+    message.textContent="WAVE 1";
+
+    setTimeout(()=>{
+        if(running){
+            message.textContent="";
+        }
+    },1500);
+
+    startWave();
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+function startGame(){
+
+    resetGame();
+
+    lastTime=performance.now();
+
+    requestAnimationFrame(gameLoop);
+}
+
+startBtn.addEventListener("click",startGame);
+restartBtn.addEventListener("click",startGame);
+
+/* =========================================================
+   WAVE SYSTEM
+========================================================= */
+
+function startWave(){
+
+    waveEnemiesLeft=5+wave*3;
+
+    waveSpawnTimer=0;
+
+    waveCompleteTimer=0;
+
+    if(wave%5===0){
+        message.textContent="BOSS WAVE";
+    }
+    else{
+        message.textContent="WAVE "+wave;
+    }
+
+    setTimeout(()=>{
+        if(running){
+            message.textContent="";
+        }
+    },1800);
+}
+
+function spawnWaveEnemy(){
+
+    if(waveEnemiesLeft<=0){
+        return;
+    }
+
+    let side=randInt(0,3);
+
+    let x;
+    let y;
+
+    if(side===0){
+        x=50;
+        y=rand(50,WORLD_H-50);
+    }
+    else if(side===1){
+        x=WORLD_W-50;
+        y=rand(50,WORLD_H-50);
+    }
+    else if(side===2){
+        x=rand(50,WORLD_W-50);
+        y=50;
+    }
+    else{
+        x=rand(50,WORLD_W-50);
+        y=WORLD_H-50;
+    }
+
+    let type=Math.random();
+
+    let enemy;
+
+    if(type<0.15 && wave>=3){
+
+        enemy={
+            type:"fast",
+            x,y,
+            radius:15,
+            speed:190+wave*5,
+            health:45+wave*4,
+            maxHealth:45+wave*4,
+            damage:12,
+            color:"#ff7a00",
+            attackCooldown:0
+        };
+
+    }
+    else if(type<0.3 && wave>=2){
+
+        enemy={
+            type:"tank",
+            x,y,
+            radius:27,
+            speed:65+wave*2,
+            health:150+wave*12,
+            maxHealth:150+wave*12,
+            damage:20,
+            color:"#9c4dff",
+            attackCooldown:0
+        };
+
+    }
+    else{
+
+        enemy={
+            type:"normal",
+            x,y,
+            radius:18,
+            speed:90+wave*3,
+            health:60+wave*5,
+            maxHealth:60+wave*5,
+            damage:10,
+            color:"#e64b4b",
+            attackCooldown:0
+        };
+    }
+
+    enemies.push(enemy);
+
+    waveEnemiesLeft--;
+}
+
+/* =========================================================
+   BOSS
+========================================================= */
+
+function spawnBoss(){
+
+    boss={
+        x:WORLD_W/2,
+        y:180,
+        radius:65,
+
+        health:1200+wave*100,
+        maxHealth:1200+wave*100,
+
+        speed:70,
+
+        attackCooldown:0,
+
+        shotCooldown:2,
+
+        phase:0
+    };
+
+    bossBar.style.display="block";
+
+    message.textContent="THE DIRECTOR";
+
+    setTimeout(()=>{
+        if(running){
+            message.textContent="";
+        }
+    },2000);
+}
+
+/* =========================================================
+   SHOOTING
+========================================================= */
+
+function getAimPoint(){
+
+    return {
+        x:mouseX+cameraX,
+        y:mouseY+cameraY
+    };
+}
+
+function shoot(){
+
+    if(!running || gameOver){
+        return;
+    }
+
+    if(player.reloadTimer>0){
+        return;
+    }
+
+    if(player.shootCooldown>0){
+        return;
+    }
+
+    if(player.ammo<=0){
+        reload();
+        return;
+    }
+
+    const aim=getAimPoint();
+
+    const dx=aim.x-player.x;
+    const dy=aim.y-player.y;
+
+    const len=Math.hypot(dx,dy)||1;
+
+    const vx=dx/len;
+    const vy=dy/len;
+
+    bullets.push({
+        x:player.x+vx*25,
+        y:player.y+vy*25,
+
+        vx:vx*850,
+        vy:vy*850,
+
+        radius:4,
+
+        damage:35,
+
+        life:1.5,
+
+        playerBullet:true
+    });
+
+    player.ammo--;
+
+    player.shootCooldown=.13;
+
+    createMuzzleParticles(
+        player.x+vx*25,
+        player.y+vy*25,
+        vx,
+        vy
+    );
+
+    if(player.ammo===0){
+        setTimeout(()=>{
+            if(running){
+                reload();
+            }
+        },200);
+    }
+}
+
+function reload(){
+
+    if(!running){
+        return;
+    }
+
+    if(player.reloadTimer>0){
+        return;
+    }
+
+    if(player.ammo>=player.maxAmmo){
+        return;
+    }
+
+    if(player.reserveAmmo<=0){
+        return;
+    }
+
+    player.reloadTimer=1.2;
+}
+
+/* =========================================================
+   GRENADES
+========================================================= */
+
+function throwGrenade(){
+
+    if(!running || gameOver){
+        return;
+    }
+
+    if(player.grenades<=0){
+        return;
+    }
+
+    const aim=getAimPoint();
+
+    const dx=aim.x-player.x;
+    const dy=aim.y-player.y;
+
+    const len=Math.hypot(dx,dy)||1;
+
+    const vx=dx/len;
+    const vy=dy/len;
+
+    grenades.push({
+        x:player.x,
+        y:player.y,
+
+        vx:vx*500,
+        vy:vy*500,
+
+        timer:1.2,
+        radius:8
+    });
+
+    player.grenades--;
+}
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+function createParticle(x,y,color,size=4,life=.5){
+
+    particles.push({
+        x,
+        y,
+        vx:rand(-150,150),
+        vy:rand(-150,150),
+        size,
+        color,
+        life,
+        maxLife:life
+    });
+}
+
+function createExplosion(x,y,big=false){
+
+    const count=big?80:35;
+
+    for(let i=0;i<count;i++){
+
+        const angle=rand(0,Math.PI*2);
+        const speed=rand(50,big?500:300);
+
+        particles.push({
+            x,
+            y,
+            vx:Math.cos(angle)*speed,
+            vy:Math.sin(angle)*speed,
+            size:rand(2,big?9:5),
+            color:Math.random()<.5?"#ffcc00":"#ff6b00",
+            life:rand(.3,.9),
+            maxLife:.9
+        });
+    }
+}
+
+/* =========================================================
+   MUZZLE EFFECT
+========================================================= */
+
+function createMuzzleParticles(x,y,vx,vy){
+
+    for(let i=0;i<8;i++){
+
+        particles.push({
+            x,
+            y,
+            vx:vx*rand(100,300)+rand(-100,100),
+            vy:vy*rand(100,300)+rand(-100,100),
+            size:rand(2,5),
+            color:"#ffe27a",
+            life:.15,
+            maxLife:.15
+        });
+    }
+}
+
+/* =========================================================
+   DAMAGE PLAYER
+========================================================= */
+
+function damagePlayer(amount){
+
+    if(player.invulnerable>0){
+        return;
+    }
+
+    player.health-=amount;
+
+    player.invulnerable=.35;
+
+    for(let i=0;i<8;i++){
+        createParticle(
+            player.x,
+            player.y,
+            "#ff3333",
+            4,
+            .4
+        );
+    }
+
+    if(player.health<=0){
+        endGame();
+    }
+}
+
+/* =========================================================
+   ENEMY DEATH
+========================================================= */
+
+function killEnemy(index){
+
+    const enemy=enemies[index];
+
+    score+=enemy.type==="tank"?40:20;
+
+    createExplosion(enemy.x,enemy.y);
+
+    if(Ma
