@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>GAS: THE ESCAPE</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    user-select:none;
+    -webkit-user-select:none;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#080808;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+canvas{
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    background:#191919;
+}
+
+#menu,
+#gameover{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    background:#090909;
+    color:white;
+}
+
+#menu h1{
+    font-size:clamp(60px,16vw,130px);
+    color:#f2c400;
+    letter-spacing:8px;
+    text-shadow:0 0 25px #6b5700;
+}
+
+#menu h2{
+    font-size:clamp(18px,4vw,30px);
+    color:#aaa;
+    margin:5px 0 35px;
+    letter-spacing:5px;
+}
+
+#menu p{
+    color:#888;
+    max-width:600px;
+    padding:0 20px;
+    line-height:1.6;
+    margin-bottom:30px;
+}
+
+button{
+    border:3px solid #f2c400;
+    background:#151515;
+    color:#f2c400;
+    padding:18px 45px;
+    border-radius:10px;
+    font-size:25px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#252525;
+}
+
+button:active{
+    transform:scale(.96);
+}
+
+#gameover{
+    display:none;
+}
+
+#gameover h1{
+    font-size:65px;
+    color:#e33;
+    margin-bottom:15px;
+}
+
+#finalText{
+    color:#ccc;
+    font-size:22px;
+    margin-bottom:30px;
+}
+
+#hud{
+    display:none;
+    position:fixed;
+    z-index:20;
+    top:10px;
+    left:10px;
+    color:white;
+    font-weight:bold;
+    text-shadow:2px 2px #000;
+    pointer-events:none;
+}
+
+.hudbox{
+    display:inline-block;
+    padding:7px 10px;
+    margin:2px;
+    border:2px solid #555;
+    border-radius:5px;
+    background:rgba(0,0,0,.75);
+}
+
+#healthOuter{
+    display:inline-block;
+    width:130px;
+    height:16px;
+    border:2px solid white;
+    vertical-align:middle;
+    background:#222;
+}
+
+#healthInner{
+    width:100%;
+    height:100%;
+    background:#36d45a;
+}
+
+#bossUI{
+    display:none;
+    position:fixed;
+    z-index:25;
+    top:15px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(600px,75vw);
+    height:25px;
+    background:#222;
+    border:3px solid #d33;
+}
+
+#bossHealth{
+    width:100%;
+    height:100%;
+    background:#d22;
+}
+
+#message{
+    position:fixed;
+    z-index:30;
+    top:40%;
+    left:0;
+    width:100%;
+    text-align:center;
+    color:white;
+    font-size:clamp(35px,8vw,75px);
+    font-weight:bold;
+    text-shadow:4px 4px #000;
+    pointer-events:none;
+}
+
+#controls{
+    display:none;
+}
+
+.touch{
+    position:absolute;
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.45);
+    background:rgba(255,255,255,.12);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    touch-action:none;
+}
+
+#up{
+    left:80px;
+    bottom:145px;
+}
+
+#down{
+    left:80px;
+    bottom:15px;
+}
+
+#left{
+    left:10px;
+    bottom:80px;
+}
+
+#right{
+    left:150px;
+    bottom:80px;
+}
+
+#fire{
+    right:20px;
+    bottom:25px;
+    width:95px;
+    height:95px;
+    background:rgba(180,30,30,.35);
+}
+
+#reload{
+    right:140px;
+    bottom:35px;
+    font-size:11px;
+}
+
+@media(pointer:coarse){
+    #controls{
+        display:block;
+        position:fixed;
+        inset:0;
+        z-index:40;
+        pointer-events:none;
+    }
+
+    .touch{
+        pointer-events:auto;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<!-- ================= START MENU ================= -->
+
+<div id="menu">
+
+    <h1>GAS</h1>
+
+    <h2>THE ESCAPE</h2>
+
+    <p>
+        Escape the facility, survive the waves of enemies,
+        collect supplies, and defeat the director.
+    </p>
+
+    <button id="startButton">START GAME</button>
+
+</div>
+
+<!-- ================= HUD ================= -->
+
+<div id="hud">
+
+    <span class="hudbox">
+        HP
+        <span id="healthOuter">
+            <span id="healthInner"></span>
+        </span>
+    </span>
+
+    <span class="hudbox">
+        AMMO:
+        <span id="ammo">12</span>
+        /
+        <span id="reserve">120</span>
+    </span>
+
+    <span class="hudbox">
+        WAVE:
+        <span id="wave">1</span>
+    </span>
+
+    <span class="hudbox">
+        SCORE:
+        <span id="score">0</span>
+    </span>
+
+</div>
+
+<!-- ================= BOSS BAR ================= -->
+
+<div id="bossUI">
+    <div id="bossHealth"></div>
+</div>
+
+<div id="message"></div>
+
+<!-- ================= GAME OVER ================= -->
+
+<div id="gameover">
+
+    <h1>GAME OVER</h1>
+
+    <div id="finalText">
+        Score: 0
+    </div>
+
+    <button id="restartButton">
+        PLAY AGAIN
+    </button>
+
+</div>
+
+<!-- ================= MOBILE ================= -->
+
+<div id="controls">
+
+    <div class="touch" id="up">▲</div>
+    <div class="touch" id="down">▼</div>
+    <div class="touch" id="left">◀</div>
+    <div class="touch" id="right">▶</div>
+
+    <div class="touch" id="fire">
+        FIRE
+    </div>
+
+    <div class="touch" id="reload">
+        RELOAD
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let width = window.innerWidth;
+let height = window.innerHeight;
+
+canvas.width = width;
+canvas.height = height;
+
+window.addEventListener("resize", () => {
+
+    width = window.innerWidth;
+    height = window.innerHeight;
+
+    canvas.width = width;
+    canvas.height = height;
+
+});
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let running = false;
+
+let score = 0;
+let wave = 1;
+
+let lastTime = 0;
+
+let messageTime = 0;
+
+let cameraX = 0;
+let cameraY = 0;
+
+const worldWidth = 3000;
+const worldHeight = 2200;
+
+let enemies = [];
+let bullets = [];
+let walls = [];
+let pickups = [];
+let particles = [];
+
+let spawnLeft = 0;
+let spawnTimer = 0;
+
+let boss = null;
+
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const player = {
+
+    x:1500,
+    y:1100,
+
+    radius:20,
+
+    speed:280,
+
+    health:100,
+    maxHealth:100,
+
+    ammo:12,
+    maxAmmo:12,
+
+    reserve:120,
+
+    shootCooldown:0,
+    reloadTime:0,
+
+    invincible:0
+
+};
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+const keys = {};
+
+let mouseX = width/2;
+let mouseY = height/2;
+
+let mouseDown = false;
+
+const touchState = {
+
+    up:false,
+    down:false,
+    left:false,
+    right:false,
+    fire:false
+
+};
+
+
+document.addEventListener("keydown",(e)=>{
+
+    keys[e.key.toLowerCase()] = true;
+
+    if(e.key.toLowerCase()==="r"){
+        reload();
+    }
+
+});
+
+
+document.addEventListener("keyup",(e)=>{
+
+    keys[e.key.toLowerCase()] = false;
+
+});
+
+
+canvas.addEventListener("mousemove",(e)=>{
+
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
+});
+
+
+canvas.addEventListener("mousedown",(e)=>{
+
+    if(e.button===0){
+        mouseDown=true;
+    }
+
+});
+
+
+document.addEventListener("mouseup",(e)=>{
+
+    if(e.button===0){
+        mouseDown=false;
+    }
+
+});
+
+
+/* =========================================================
+   MOBILE INPUT
+========================================================= */
+
+function setupTouch(id,state){
+
+    const element=document.getElementById(id);
+
+    element.addEventListener("touchstart",(e)=>{
+
+        e.preventDefault();
+
+        touchState[state]=true;
+
+    },{passive:false});
+
+
+    element.addEventListener("touchend",(e)=>{
+
+        e.preventDefault();
+
+        touchState[state]=false;
+
+    },{passive:false});
+
+
+    element.addEventListener("touchcancel",(e)=>{
+
+        e.preventDefault();
+
+        touchState[state]=false;
+
+    },{passive:false});
+
+
+    element.addEventListener("mousedown",()=>{
+
+        touchState[state]=true;
+
+    });
+
+
+    element.addEventListener("mouseup",()=>{
+
+        touchState[state]=false;
+
+    });
+
+
+    element.addEventListener("mouseleave",()=>{
+
+        touchState[state]=false;
+
+    });
+
+}
+
+
+setupTouch("up","up");
+setupTouch("down","down");
+setupTouch("left","left");
+setupTouch("right","right");
+setupTouch("fire","fire");
+
+
+document.getElementById("reload").addEventListener(
+    "click",
+    reload
+);
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+document.getElementById("startButton").addEventListener(
+    "click",
+    startGame
+);
+
+
+document.getElementById("restartButton").addEventListener(
+    "click",
+    startGame
+);
+
+
+/* =========================================================
+   RANDOM
+========================================================= */
+
+function random(min,max){
+
+    return Math.random()*(max-min)+min;
+
+}
+
+
+function randomInt(min,max){
+
+    return Math.floor(
+        Math.random()*(max-min+1)
+    )+min;
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+function startGame(){
+
+    running=true;
+
+    score=0;
+    wave=1;
+
+    enemies=[];
+    bullets=[];
+    walls=[];
+    pickups=[];
+    particles=[];
+
+    boss=null;
+
+    player.x=1500;
+    player.y=1100;
+
+    player.health=100;
+    player.ammo=12;
+    player.reserve=120;
+
+    player.shootCooldown=0;
+    player.reloadTime=0;
+    player.invincible=0;
+
+    createWalls();
+
+    document.getElementById("menu").style.display="none";
+
+    document.getElementById("gameover").style.display="none";
+
+    document.getElementById("hud").style.display="block";
+
+    document.getElementById("bossUI").style.display="none";
+
+    beginWave();
+
+    lastTime=performance.now();
+
+    requestAnimationFrame(loop);
+
+}
+
+
+/* =========================================================
+   WALLS
+========================================================= */
+
+function createWalls(){
+
+    walls=[];
+
+    for(let i=0;i<45;i++){
+
+        const wall={
+
+            x:randomInt(80,worldWidth-300),
+
+            y:randomInt(80,worldHeight-240),
+
+            width:randomInt(100,240),
+
+            height:randomInt(60,170)
+
+        };
+
+        if(
+            Math.abs(
+                wall.x-player.x
+            )<350 &&
+            Math.abs(
+                wall.y-player.y
+            )<300
+        ){
+
+            i--;
+
+            continue;
+        }
+
+        walls.push(wall);
+
+    }
+
+}
+
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function circleHitsWall(x,y,r,wall){
+
+    const closestX=Math.max(
+        wall.x,
+        Math.min(x,wall.x+wall.width)
+    );
+
+    const closestY=Math.max(
+        wall.y,
+        Math.min(y,wall.y+wall.height)
+    );
+
+    const dx=x-closestX;
+    const dy=y-closestY;
+
+    return dx*dx+dy*dy<r*r;
+
+}
+
+
+function blocked(x,y,r){
+
+    if(
+        x-r<0 ||
+        y-r<0 ||
+        x+r>worldWidth ||
+        y+r>worldHeight
+    ){
+
+        return true;
+
+    }
+
+    for(const wall of walls){
+
+        if(
+            circleHitsWall(
+                x,
+                y,
+                r,
+                wall
+            )
+        ){
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+}
+
+
+function moveObject(object,dx,dy){
+
+    if(
+        !blocked(
+            object.x+dx,
+            object.y,
+            object.radius
+        )
+    ){
+
+        object.x+=dx;
+
+    }
+
+
+    if(
+        !blocked(
+            object.x,
+            object.y+dy,
+            object.radius
+        )
+    ){
+
+        object.y+=dy;
+
+    }
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function showMessage(text){
+
+    const element=document.getElementById("message");
+
+    element.textContent=text;
+
+    messageTime=2;
+
+}
+
+
+/* =========================================================
+   WAVES
+========================================================= */
+
+function beginWave(){
+
+    spawnLeft=5+wave*3;
+
+    spawnTimer=0;
+
+    showMessage("WAVE "+wave);
+
+}
+
+
+/* =========================================================
+   ENEMY SPAWN
+========================================================= */
+
+function spawnEnemy(){
+
+    let x;
+    let y;
+
+    const side=randomInt(0,3);
+
+    if(side===0){
+
+        x=30;
+        y=random(30,worldHeight-30);
+
+    }
+    else if(side===1){
+
+        x=worldWidth-30;
+        y=random(30,worldHeight-30);
+
+    }
+    else if(side===2){
+
+        x=random(30,worldWidth-30);
+        y=30;
+
+    }
+    else{
+
+        x=random(30,worldWidth-30);
+        y=worldHeight-30;
+
+    }
+
+
+    const roll=Math.random();
+
+    let enemy;
+
+
+    if(roll<.2 && wave>=3){
+
+        enemy={
+
+            type:"fast",
+
+            x:x,
+            y:y,
+
+            radius:15,
+
+            speed:190,
+
+            health:45+wave*4,
+
+            maxHealth:45+wave*4,
+
+            damage:12,
+
+            attack:0,
+
+            shoot:1,
+
+            color:"#ff9c27"
+
+        };
+
+    }
+    else if(roll<.4 && wave>=2){
+
+        enemy={
+
+            type:"tank",
+
+            x:x,
+            y:y,
+
+            radius:29,
+
+            speed:60,
+
+            health:150+wave*15,
+
+            maxHealth:150+wave*15,
+
+            damage:20,
+
+            attack:0,
+
+            shoot:1,
+
+            color:"#9a4cff"
+
+        };
+
+    }
+    else{
+
+        enemy={
+
+            type:"normal",
+
+            x:x,
+            y:y,
+
+            radius:19,
+
+            speed:90,
+
+            health:60+wave*5,
+
+            maxHealth:60+wave*5,
+
+            damage:10,
+
+            attack:0,
+
+            shoot:random(.5,2),
+
+            color:"#e04444"
+
+        };
+
+    }
+
+
+    enemies.push(enemy);
+
+    spawnLeft--;
+
+}
+
+
+/* =========================================================
+   BOSS
+========================================================= */
+
+function createBoss(){
+
+    boss={
+
+        x:worldWidth/2,
+
+        y:180,
+
+        radius:65,
+
+        speed:65,
+
+        health:1200+wave*100,
+
+        maxHealth:1200+wave*100,
+
+        attack:0,
+
+        shoot:1
+
+    };
+
+
+    document.getElementById(
+        "bossUI"
+    ).style.display="block";
+
+
+    showMessage("THE DIRECTOR");
+
+}
+
+
+/* =========================================================
+   SHOOT
+========================================================= */
+
+function shoot(){
+
+    if(!running){
+        return;
+    }
+
+    if(player.reloadTime>0){
+        return;
+    }
+
+    if(player.shootCooldown>0){
+        return;
+    }
+
+    if(player.ammo<=0){
+
+        reload();
+
+        return;
+
+    }
+
+
+    const targetX=mouseX+cameraX;
+    const targetY=mouseY+cameraY;
+
+
+    let dx=targetX-player.x;
+    let dy=targetY-player.y;
+
+
+    const distance=Math.hypot(dx,dy)||1;
+
+
+    dx/=distance;
+    dy/=distance;
+
+
+    bullets.push({
+
+        x:player.x+dx*28,
+
+        y:player.y+dy*28,
+
+        vx:dx*900,
+
+        vy:dy*900,
+
+        radius:5,
+
+        damage:35,
+
+        life:2,
+
+        friendly:true
+
+    });
+
+
+    player.ammo--;
+
+    player.shootCooldown=.13;
+
+}
+
+
+/* =========================================================
+   RELOAD
+========================================================= */
+
+function reload(){
+
+    if(!running){
+        return;
+    }
+
+    if(player.reloadTime>0){
+        return;
+    }
+
+    if(player.ammo>=player.maxAmmo){
+        return;
+    }
+
+    if(player.reserve<=0){
+        return;
+    }
+
+    player.reloadTime=1;
+
+}
+
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+function particle(x,y,color){
+
+    particles.push({
+
+        x:x,
+        y:y,
+
+        vx:random(-180,180),
+        vy:random(-180,180),
+
+        size:random(2,6),
+
+        life:.5,
+
+        maxLife:.5,
+
+        color:color
+
+    });
+
+}
+
+
+function explosion(x,y){
+
+    for(let i=0;i<25;i++){
+
+        const angle=random(0,Math.PI*2);
+
+        const speed=random(60,350);
+
+        particles.push({
+
+            x:x,
+            y:y,
+
+            vx:Math.cos(angle)*speed,
+
+            vy:Math.sin(angle)*speed,
+
+            size:random(3,8),
+
+            life:random(.3,.8),
+
+            maxLife:.8,
+
+            color:
+                Math.random()<.5
+                ?"orange"
+                :"yellow"
+
+        });
+
+    }
+
+}
+
+
+/* =========================================================
+   PLAYER DAMAGE
+========================================================= */
+
+function damagePlayer(amount){
+
+    if(player.invincible>0){
+        return;
+    }
+
+    player.health-=amount;
+
+    player.invincible=.35;
+
+
+    for(let i=0;i<8;i++){
+
+        particle(
+            player.x,
+            player.y,
+            "red"
+        );
+
+    }
+
+
+    if(player.health<=0){
+
+        endGame();
+
+    }
+
+}
+
+
+/* =========================================================
+   UPDATE PLAYER
+========================================================= */
+
+function updatePlayer(dt){
+
+    let dx=0;
+    let dy=0;
+
+
+    if(
+        keys["w"] ||
+        keys["arrowup"] ||
+        touchState.up
+    ){
+
+        dy--;
+
+    }
+
+
+    if(
+        keys["s"] ||
+        keys["arrowdown"] ||
+        touchState.down
+    ){
+
+        dy++;
+
+    }
+
+
+    if(
+        keys["a"] ||
+        keys["arrowleft"] ||
+        touchState.left
+    ){
+
+        dx--;
+
+    }
+
+
+    if(
+        keys["d"] ||
+        keys["arrowright"] ||
+        touchState.right
+    ){
+
+        dx++;
+
+    }
+
+
+    if(dx!==0 || dy!==0){
+
+        const distance=Math.hypot(dx,dy);
+
+        dx/=distance;
+        dy/=distance;
+
+
+        moveObject(
+            player,
+            dx*player.speed*dt,
+            dy*player.speed*dt
+        );
+
+    }
+
+
+    if(
+        mouseDown ||
+        touchState.fire
+    ){
+
+        shoot();
+
+    }
+
+
+    if(player.shootCooldown>0){
+
+        player.shootCooldown-=dt;
+
+    }
+
+
+    if(player.reloadTime>0){
+
+        player.reloadTime-=dt;
+
+
+        if(player.reloadTime<=0){
+
+            const needed=
+                player.maxAmmo-player.ammo;
+
+
+            const amount=Math.min(
+                needed,
+                player.reserve
+            );
+
+
+            player.ammo+=amount;
+
+            player.reserve-=amount;
+
+        }
+
+    }
+
+
+    if(player.invincible>0){
+
+        player.invincible-=dt;
+
+    }
+
+
+    cameraX=
+        player.x-width/2;
+
+    cameraY=
+        player.y-height/2;
+
+
+    cameraX=Math.max(
+        0,
+        Math.min(
+            cameraX,
+            worldWidth-width
+        )
+    );
+
+
+    cameraY=Math.max(
+        0,
+        Math.min(
+            cameraY,
+            worldHeight-height
+        )
+    );
+
+}
+
+
+/* =========================================================
+   BULLETS
+========================================================= */
+
+function updateBullets(dt){
+
+    for(
+        let i=bullets.length-1;
+        i>=0;
+        i--
+    ){
+
+        const bullet=bullets[i];
+
+
+        bullet.x+=bullet.vx*dt;
+
+        bullet.y+=bullet.vy*dt;
+
+        bullet.life-=dt;
+
+
+        let remove=
+            bullet.life<=0;
+
+
+        if(
+            bullet.x<0 ||
+            bullet.y<0 ||
+            bullet.x>worldWidth ||
+            bullet.y>worldHeight
+        ){
+
+            remove=true;
+
+        }
+
+
+        for(const wall of walls){
+
+            if(
+                circleHitsWall(
+                    bullet.x,
+                    bullet.y,
+                    bullet.radius,
+                    wall
+                )
+            ){
+
+                remove=true;
+
+                break;
+
+            }
+
+        }
+
+
+        if(
+            bullet.friendly &&
+            !remove
+        ){
+
+            for(
+                let j=enemies.length-1;
+                j>=0;
+                j--
+            ){
+
+                const enemy=enemies[j];
+
+
+              
