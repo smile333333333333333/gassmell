@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>GAS: THE TRUTH</title>
+<style>
+*{box-sizing:border-box;user-select:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050505;color:#fff;font-family:Arial}
+canvas{position:absolute;inset:0;background:#111}
+.hidden{display:none!important}
+.screen{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#202020,#050505 70%)}
+.panel{width:min(850px,92vw);max-height:90vh;overflow:auto;background:rgba(5,5,5,.96);border:2px solid #8d2929;padding:35px;text-align:center;box-shadow:0 0 40px #300}
+.logo{font-size:clamp(50px,10vw,100px);margin:0;color:#d33;letter-spacing:10px;text-shadow:5px 5px #200}
+.subtitle{letter-spacing:7px;color:#aaa}
+button{padding:14px 35px;margin:7px;background:#721d1d;color:#fff;border:1px solid #d55;font-size:18px;font-weight:bold;cursor:pointer}
+button:hover{background:#a32}
+#hud{position:fixed;z-index:10;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.box{background:rgba(0,0,0,.7);border:1px solid #555;padding:8px 12px;min-width:145px;text-shadow:2px 2px #000}
+.bar{width:180px;height:12px;background:#222;border:1px solid #666;margin:3px 0 5px}
+.fill{height:100%;width:100%}
+#hp{background:#43b95a}
+#armor{background:#438fd1}
+#bossHud{position:fixed;z-index:12;top:70px;left:50%;transform:translateX(-50%);width:min(650px,75vw);display:none;text-align:center}
+#bossBar{height:18px;border:2px solid #d55;background:#210707}
+#bossFill{height:100%;width:100%;background:#c33}
+#objective{position:fixed;z-index:10;bottom:15px;left:50%;transform:translateX(-50%);padding:9px 18px;background:rgba(0,0,0,.8);border:1px solid #555}
+#weapon{position:fixed;z-index:10;right:10px;bottom:55px;background:rgba(0,0,0,.75);padding:10px;border:1px solid #555}
+#controls{position:fixed;z-index:10;left:10px;bottom:10px;font-size:12px;color:#aaa}
+#message{position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);display:none;padding:20px 30px;background:rgba(0,0,0,.92);border:1px solid #b33;font-size:21px;text-align:center}
+#pause{position:fixed;z-index:40;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);font-size:60px;font-weight:bold;letter-spacing:8px}
+#cross{position:fixed;z-index:20;width:20px;height:20px;pointer-events:none;transform:translate(-50%,-50%)}
+#cross:before,#cross:after{content:"";position:absolute;background:#fff}
+#cross:before{width:2px;height:20px;left:9px}
+#cross:after{width:20px;height:2px;top:9px}
+#mobile{display:none}
+.mbtn{position:fixed;z-index:25;width:62px;height:62px;border-radius:50%;padding:0;margin:0;background:#5558;border:1px solid #aaa}
+@media(max-width:700px){
+#controls{display:none}
+#mobile{display:block}
+.box{min-width:auto;font-size:12px}
+.bar{width:90px}
+#objective{font-size:11px;bottom:4px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="menu" class="screen">
+<div class="panel">
+<h1 class="logo">GAS</h1>
+<div class="subtitle">THE TRUTH</div>
+<p style="color:#aaa;letter-spacing:3px">CLASSIFIED FACILITY</p>
+<div style="max-width:600px;margin:25px auto;color:#ccc">
+Something is wrong inside the GAS distribution facility.
+Security has sealed the building.
+Find the truth and survive.
+</div>
+<button id="start">START GAME</button>
+<button id="help">CONTROLS</button>
+</div>
+</div>
+
+<div id="helpScreen" class="screen hidden">
+<div class="panel">
+<h1>CONTROLS</h1>
+<p><b>W A S D</b> — Move</p>
+<p><b>Mouse</b> — Aim</p>
+<p><b>Left Click</b> — Fire</p>
+<p><b>1 / 2 / 3 / 4</b> — Weapons</p>
+<p><b>R</b> — Reload</p>
+<p><b>SHIFT</b> — Dash</p>
+<p><b>P / ESC</b> — Pause</p>
+<button id="back">BACK</button>
+</div>
+</div>
+
+<div id="hud" class="hidden">
+<div class="box">
+HEALTH
+<div class="bar"><div id="hp" class="fill"></div></div>
+ARMOR
+<div class="bar"><div id="armor" class="fill"></div></div>
+</div>
+<div class="box">
+SCORE: <span id="score">0</span><br>
+ROOM: <span id="room">1</span><br>
+KILLS: <span id="kills">0</span>
+</div>
+<div class="box">
+AMMO: <span id="ammo">0</span>/<span id="reserve">0</span><br>
+WEAPON: <span id="weaponName">PISTOL</span>
+</div>
+</div>
+
+<div id="bossHud">
+<div style="color:#f55;font-weight:bold;margin-bottom:5px">FACILITY SECURITY COMMANDER</div>
+<div id="bossBar"><div id="bossFill"></div></div>
+</div>
+
+<div id="objective" class="hidden">OBJECTIVE: ENTER THE FACILITY</div>
+<div id="weapon" class="hidden">PISTOL</div>
+<div id="controls" class="hidden">WASD MOVE | MOUSE AIM | CLICK FIRE | 1-4 WEAPONS | R RELOAD | SHIFT DASH | P PAUSE</div>
+<div id="message"></div>
+<div id="pause">PAUSED</div>
+<div id="cross"></div>
+
+<div id="mobile">
+<button class="mbtn" id="mw" style="left:75px;bottom:135px">▲</button>
+<button class="mbtn" id="ma" style="left:10px;bottom:70px">◀</button>
+<button class="mbtn" id="ms" style="left:75px;bottom:70px">▼</button>
+<button class="mbtn" id="md" style="left:140px;bottom:70px">▶</button>
+<button class="mbtn" id="mf" style="right:20px;bottom:85px">●</button>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   BASIC SETUP
+========================================================= */
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let W=innerWidth;
+let H=innerHeight;
+
+canvas.width=W;
+canvas.height=H;
+
+addEventListener("resize",()=>{
+W=innerWidth;
+H=innerHeight;
+canvas.width=W;
+canvas.height=H;
+});
+
+const menu=document.getElementById("menu");
+const helpScreen=document.getElementById("helpScreen");
+const hud=document.getElementById("hud");
+const objective=document.getElementById("objective");
+const weaponUI=document.getElementById("weapon");
+const controls=document.getElementById("controls");
+const message=document.getElementById("message");
+const pauseUI=document.getElementById("pause");
+const bossHud=document.getElementById("bossHud");
+const bossFill=document.getElementById("bossFill");
+const cross=document.getElementById("cross");
+
+const scoreUI=document.getElementById("score");
+const roomUI=document.getElementById("room");
+const killsUI=document.getElementById("kills");
+const ammoUI=document.getElementById("ammo");
+const reserveUI=document.getElementById("reserve");
+const weaponNameUI=document.getElementById("weaponName");
+const hpUI=document.getElementById("hp");
+const armorUI=document.getElementById("armor");
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let running=false;
+let paused=false;
+let score=0;
+let room=1;
+let kills=0;
+let wave=0;
+let gameTime=0;
+let screenShake=0;
+
+let player=null;
+let boss=null;
+
+let enemies=[];
+let bullets=[];
+let enemyBullets=[];
+let particles=[];
+let pickups=[];
+let walls=[];
+let doors=[];
+let crates=[];
+let barrels=[];
+let terminals=[];
+let lights=[];
+let decals=[];
+
+let camera={x:0,y:0};
+
+let keys={};
+
+let mouse={
+x:W/2,
+y:H/2,
+down:false
+};
+
+let messageTimer=0;
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+
+if(e.key==="1")switchWeapon(0);
+if(e.key==="2")switchWeapon(1);
+if(e.key==="3")switchWeapon(2);
+if(e.key==="4")switchWeapon(3);
+
+if(e.key.toLowerCase()==="r")reload();
+
+if(e.key==="Shift")dash();
+
+if(e.key.toLowerCase()==="p"||e.key==="Escape")
+togglePause();
+});
+
+addEventListener("keyup",e=>{
+keys[e.key.toLowerCase()]=false;
+});
+
+canvas.addEventListener("mousemove",e=>{
+mouse.x=e.clientX;
+mouse.y=e.clientY;
+cross.style.left=mouse.x+"px";
+cross.style.top=mouse.y+"px";
+});
+
+canvas.addEventListener("mousedown",()=>{
+mouse.down=true;
+});
+
+addEventListener("mouseup",()=>{
+mouse.down=false;
+});
+
+/* =========================================================
+   MOBILE INPUT
+========================================================= */
+
+function mobileHold(id,key){
+const b=document.getElementById(id);
+
+b.addEventListener("touchstart",e=>{
+e.preventDefault();
+keys[key]=true;
+});
+
+b.addEventListener("touchend",e=>{
+e.preventDefault();
+keys[key]=false;
+});
+}
+
+mobileHold("mw","w");
+mobileHold("ma","a");
+mobileHold("ms","s");
+mobileHold("md","d");
+
+document.getElementById("mf").addEventListener("touchstart",e=>{
+e.preventDefault();
+mouse.down=true;
+});
+
+document.getElementById("mf").addEventListener("touchend",e=>{
+e.preventDefault();
+mouse.down=false;
+});
+
+document.addEventListener("touchmove",e=>{
+e.preventDefault();
+},{passive:false});
+
+/* =========================================================
+   MENU
+========================================================= */
+
+document.getElementById("help").onclick=()=>{
+menu.classList.add("hidden");
+helpScreen.classList.remove("hidden");
+};
+
+document.getElementById("back").onclick=()=>{
+helpScreen.classList.add("hidden");
+menu.classList.remove("hidden");
+};
+
+document.getElementById("start").onclick=startGame;
+
+/* =========================================================
+   WEAPONS
+========================================================= */
+
+const weapons=[
+{
+name:"PISTOL",
+damage:28,
+rate:15,
+speed:14,
+spread:.025,
+pellets:1,
+mag:12,
+ammo:12,
+reserve:72,
+reload:55,
+color:"#fff"
+},
+{
+name:"SMG",
+damage:12,
+rate:4,
+speed:15,
+spread:.12,
+pellets:1,
+mag:32,
+ammo:32,
+reserve:128,
+reload:75,
+color:"#ffe17a"
+},
+{
+name:"SHOTGUN",
+damage:18,
+rate:34,
+speed:12,
+spread:.38,
+pellets:8,
+mag:6,
+ammo:6,
+reserve:42,
+reload:90,
+color:"#ffbd73"
+},
+{
+name:"RIFLE",
+damage:45,
+rate:25,
+speed:18,
+spread:.012,
+pellets:1,
+mag:8,
+ammo:8,
+reserve:48,
+reload:80,
+color:"#9ce6ff"
+}
+];
+
+let weaponIndex=0;
+let reloading=false;
+let reloadTimer=0;
+
+/* =========================================================
+   ENEMY TYPES
+========================================================= */
+
+const enemyTypes={
+guard:{
+name:"GUARD",
+hp:55,
+speed:1.25,
+radius:17,
+damage:8,
+delay:95,
+bullet:4,
+color:"#b43a3a",
+value:125
+},
+security:{
+name:"SECURITY",
+hp:75,
+speed:1.55,
+radius:18,
+damage:10,
+delay:70,
+bullet:5,
+color:"#456fa8",
+value:175
+},
+heavy:{
+name:"HEAVY",
+hp:150,
+speed:.65,
+radius:24,
+damage:16,
+delay:135,
+bullet:3,
+color:"#743434",
+value:300
+},
+runner:{
+name:"RUNNER",
+hp:35,
+speed:2.4,
+radius:13,
+damage:11,
+delay:180,
+bullet:4,
+color:"#b8793e",
+value:150
+},
+medic:{
+name:"MEDIC",
+hp:65,
+speed:1.1,
+radius:17,
+damage:5,
+delay:110,
+bullet:4,
+color:"#4c9b67",
+value:225
+},
+elite:{
+name:"ELITE",
+hp:110,
+speed:1.8,
+radius:19,
+damage:14,
+delay:55,
+bullet:6,
+color:"#8c4db3",
+value:400
+}
+};
+
+/* =========================================================
+   GAME START
+========================================================= */
+
+function startGame(){
+
+running=true;
+paused=false;
+
+menu.classList.add("hidden");
+helpScreen.classList.add("hidden");
+
+hud.classList.remove("hidden");
+objective.classList.remove("hidden");
+weaponUI.classList.remove("hidden");
+controls.classList.remove("hidden");
+
+score=0;
+room=1;
+kills=0;
+wave=0;
+gameTime=0;
+screenShake=0;
+
+enemies=[];
+bullets=[];
+enemyBullets=[];
+particles=[];
+pickups=[];
+walls=[];
+doors=[];
+crates=[];
+barrels=[];
+terminals=[];
+lights=[];
+decals=[];
+
+boss=null;
+
+for(const w of weapons){
+w.ammo=w.mag;
+}
+
+weapons[0].reserve=72;
+weapons[1].reserve=128;
+weapons[2].reserve=42;
+weapons[3].reserve=48;
+
+weaponIndex=0;
+reloading=false;
+
+player={
+x:350,
+y:400,
+radius:16,
+speed:3.5,
+health:100,
+maxHealth:100,
+armor:50,
+maxArmor:50,
+fireCooldown:0,
+invincible:0,
+dashCooldown:0,
+angle:0
+};
+
+generateMap();
+
+objective.textContent="OBJECTIVE: FIND THE SECURITY DOOR";
+
+showMessage("WELCOME TO THE GAS FACILITY");
+
+requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   MAP GENERATION
+========================================================= */
+
+function generateMap(){
+
+const MW=3000;
+const MH=2400;
+
+/* outer walls */
+wall(0,0,MW,40);
+wall(0,MH-40,MW,40);
+wall(0,0,40,MH);
+wall(MW-40,0,40,MH);
+
+/* upper left room */
+wall(100,120,700,30);
+wall(100,120,30,650);
+wall(100,740,700,30);
+wall(770,120,30,250);
+wall(770,520,30,250);
+
+/* upper middle */
+wall(1000,120,850,30);
+wall(1000,740,850,30);
+wall(1000,120,30,220);
+wall(1000,500,30,240);
+wall(1820,120,30,620);
+
+/* upper right */
+wall(2050,120,750,30);
+wall(2050,740,750,30);
+wall(2050,120,30,220);
+wall(2050,500,30,240);
+wall(2770,120,30,620);
+
+/* central */
+wall(100,950,900,30);
+wall(100,1550,900,30);
+wall(100,950,30,600);
+wall(970,950,30,220);
+wall(970,1280,30,270);
+
+wall(1200,950,700,30);
+wall(1200,1550,700,30);
+wall(1200,950,30,600);
+wall(1870,950,30,600);
+
+/* lower */
+wall(2100,950,700,30);
+wall(2100,1550,700,30);
+wall(2100,950,30,600);
+wall(2770,950,30,600);
+
+/* bottom */
+wall(100,1770,850,30);
+wall(100,2280,850,30);
+wall(100,1770,30,510);
+wall(920,1770,30,210);
+wall(920,2100,30,180);
+
+wall(1100,1770,800,30);
+wall(1100,2280,800,30);
+wall(1100,1770,30,510);
+wall(1870,1770,30,510);
+
+wall(2050,1770,750,30);
+wall(2050,2280,750,30);
+wall(2050,1770,30,510);
+wall(2770,1770,30,510);
+
+/* internal walls */
+wall(250,300,250,30);
+wall(600,300,120,30);
+wall(250,500,200,30);
+wall(550,500,180,30);
+
+wall(1120,300,260,30);
+wall(1500,300,250,30);
+wall(1120,520,300,30);
+wall(1550,520,220,30);
+
+wall(2160,300,220,30);
+wall(2480,300,200,30);
+wall(2160,520,300,30);
+wall(2520,520,150,30);
+
+wall(250,1100,280,30);
+wall(650,1100,220,30);
+wall(250,1300,220,30);
+wall(600,1300,260,30);
+
+wall(1300,1100,220,30);
+wall(1600,1100,220,30);
+wall(1300,1300,300,30);
+wall(1680,1300,130,30);
+
+wall(2200,1100,250,30);
+wall(2550,1100,180,30);
+wall(2200,1300,180,30);
+wall(2500,1300,240,30);
+
+wall(250,1900,250,30);
+wall(600,1900,220,30);
+wall(250,2120,300,30);
+wall(650,2120,170,30);
+
+wall(1200,1900,250,30);
+wall(1550,1900,220,30);
+wall(1200,2120,300,30);
+wall(1600,2120,170,30);
+
+wall(2150,1900,300,30);
+wall(2550,1900,150,30);
+wall(2150,2120,220,30);
+wall(2450,2120,250,30);
+
+/* doors */
+doors.push(
+{x:770,y:370,w:30,h:150,locked:true},
+{x:970,y:340,w:30,h:160,locked:true},
+{x:1850,y:350,w:30,h:160,locked:true},
+{x:2050,y:340,w:30,h:160,locked:true},
+{x:970,y:1170,w:30,h:110,locked:true},
+{x:1900,y:1150,w:30,h:150,locked:true},
+{x:950,y:1980,w:30,h:120,locked:true},
+{x:1900,y:1980,w:30,h:120,locked:true}
+);
+
+/* crates */
+for(let i=0;i<35;i++){
+crates.push({
+x:120+Math.random()*2650,
+y:180+Math.random()*2000,
+w:32,
+h:32
+});
+}
+
+/* barrels */
+for(let i=0;i<25;i++){
+barrels.push({
+x:120+Math.random()*2650,
+y:180+Math.random()*2000,
+r:16,
+health:40,
+explosive:true
+});
+}
+
+/* terminals */
+terminals.push(
+{x:650,y:650,used:false},
+{x:1650,y:650,used:false},
+{x:650,y:1450,used:false},
+{x:1650,y:1450,used:false},
+{x:2600,y:1450,used:false},
+{x:1650,y:2180,used:false}
+);
+
+/* lights */
+for(let i=0;i<70;i++){
+lights.push({
+x:100+Math.random()*2700,
+y:100+Math.random()*2200,
+flicker:Math.random()*100
+});
+}
+
+/* decals */
+for(let i=0;i<180;i++){
+decals.push({
+x:70+Math.random()*2860,
+y:70+Math.random()*2260,
+type:Math.floor(Math.random()*5)
+});
+}
+
+/* enemies */
+spawnWave(1,500,400,350);
+spawnWave(2,1450,420,450);
+spawnWave(2,2400,420,400);
+spawnWave(2,600,1200,400);
+spawnWave(2,1600,1200,400);
+}
+
+/* pickups */
+spawnPickup(250,650,"health");
+spawnPickup(700,650,"ammo");
+spawnPickup(1400,650,"armor");
+spawnPickup(1750,650,"ammo");
+}
+
+/* =========================================================
+   WALL
+========================================================= */
+
+function wall(x,y,w,h){
+walls.push({x,y,w,h});
+}
+
+/* =========================================================
+   SPAWN WAVE
+========================================================= */
+
+function spawnWave(amount,x,y,radius){
+
+for(let i=0;i<amount;i++){
+
+let typeRoll=Math.random();
+
+let type;
+
+if(typeRoll<.08+wave*.01){
+type=enemyTypes.elite;
+}else if(typeRoll<.20){
+type=enemyTypes.heavy;
+}else if(typeRoll<.38){
+type=enemyTypes.security;
+}else if(typeRoll<.52){
+type=enemyTypes.runner;
+}else if(typeRoll<.60){
+type=enemyTypes.medic;
+}else{
+type=enemyTypes.guard;
+}
+
+let a=Math.random()*Math.PI*2;
+let d=100+Math.random()*radius;
+
+let x2=x+Math.cos(a)*d;
+let y2=y+Math.sin(a)*d;
+
+x2=Math.max(70,Math.min(2930,x2));
+y2=Math.max(70,Math.min(2330,y2));
+
+enemies.push({
+x:x2,
+y:y2,
+radius:type.radius,
+health:type.hp,
+maxHealth:type.hp,
+speed:type.speed,
+damage:type.damage,
+delay:type.delay,
+bulletSpeed:type.bullet,
+color:type.color,
+type:type.name,
+value:type.value,
+shootTimer:30+Math.random()*type.delay,
+hitFlash:0,
+healTimer:0
+});
+}
+}
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function circleRect(c,r){
+
+let x=Math.max(r.x,Math.min(c.x,r.x+r.w));
+let y=Math.max(r.y,Math.min(c.y,r.y+r.h));
+
+let dx=c.x-x;
+let dy=c.y-y;
+
+return dx*dx+dy*dy<c.radius*c.radius;
+}
+
+function blockedCircle(c){
+
+for(const w of walls){
+if(circleRect(c,w))return true;
+}
+
+for(const d of doors){
+if(d.locked&&circleRect(c,d))return true;
+}
+
+return false;
+}
+
+/* =========================================================
+   ENTITY MOVEMENT
+========================================================= */
+
+function moveEntity(e,dx,dy){
+
+e.x+=dx;
+
+if(blockedCircle(e)){
+e.x-=dx;
+}
+
+e.y+=dy;
+
+if(blockedCircle(e)){
+e.y-=dy;
+}
+
+e.x=Math.max(55,Math.min(2945,e.x));
+e.y=Math.max(55,Math.min(2345,e.y));
+}
+
+/* =========================================================
+   DISTANCE
+========================================================= */
+
+function distance(a,b){
+return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+/* =========================================================
+   WEAPON SWITCH
+========================================================= */
+
+function switchWeapon(i){
+
+if(!running)return;
+
+if(i<0||i>=weapons.length)return;
+
+weaponIndex=i;
+reloading=false;
+
+updateHUD();
+}
+
+/* =========================================================
+   SHOOT
+========================================================= */
+
+function shoot(){
+
+if(!running||paused||reloading)return;
+
+let w=weapons[weaponIndex];
+
+if(player.fireCooldown>0)return;
+
+if(w.ammo<=0){
+reload();
+return;
+}
+
+let angle=Math.atan2(
+mouse.y-H/2,
+mouse.x-W/2
+);
+
+player.angle=angle;
+
+for(let i=0;i<w.pellets;i++){
+
+let a=angle+(Math.random()-.5)*w.spread;
+
+bullets.push({
+x:player.x+Math.cos(a)*23,
+y:player.y+Math.sin(a)*23,
+dx:Math.cos(a)*w.speed,
+dy:Math.sin(a)*w.speed,
+damage:w.damage,
+radius:weaponIndex===2?4:3,
+life:90,
+color:w.color
+});
+}
+
+w.ammo--;
+player.fireCooldown=w.rate;
+
+muzzleFlash(angle);
+
+updateHUD();
+}
+
+/* =========================================================
+   MUZZLE FLASH
+========================================================= */
+
+function muzzleFlash(angle){
+
+for(let i=0;i<8;i++){
+
+particles.push({
+x:player.x+Math.cos(angle)*25,
+y:player.y+Math.sin(angle)*25,
+dx:Math.cos(angle)*(2+Math.random()*4)+(Math.random()-.5),
+dy:Math.sin(angle)*(2+Math.random()*4)+(Math.random()-.5),
+life:8+Math.random()*8,
+maxLife:16,
+size:2+Math.random()*4,
+color:"#ffd45e"
+});
+}
+
+screenShake=Math.max(screenShake,2);
+}
+
+/* =========================================================
+   RELOAD
+========================================================= */
+
+function reload(){
+
+if(!running||paused||reloading)return;
+
+let w=weapons[weaponIndex];
+
+if(w.ammo>=w.mag||w.reserve<=0)return;
+
+reloading=true;
+reloadTimer=w.reload;
+
+showMessage("RELOADING...");
+}
+
+function completeReload(){
+
+let w=weapons[weaponIndex];
+
+let needed=w.mag-w.ammo;
+let amount=Math.min(needed,w.reserve);
+
+w.ammo+=amount;
+w.reserve-=amount;
+
+reloading=false;
+reloadTimer=0;
+
+updateHUD();
+}
+
+/* =========================================================
+   DASH
+========================================================= */
+
+function dash(){
+
+if(!running||paused)return;
+if(player.dashCooldown>0)return;
+
+let dx=0;
+let dy=0;
+
+if(keys.w)dy--;
+if(keys.s)dy++;
+if(keys.a)dx--;
+if(keys.d)dx++;
+
+if(!dx&&!dy){
+dx=Math.cos(player.angle);
+dy=Math.sin(player.angle);
+}else{
+let len=Math.hypot(dx,dy);
+dx/=len;
+dy/=len;
+}
+
+for(let i=0;i<10;i++){
+
+pa
